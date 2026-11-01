@@ -5,28 +5,81 @@
     <a class="button button-seed" href="/claims/new">New claim</a>
   </div>
 
-  <% if (claims.length === 0) { %>
+  <% if (total === 0) { %>
     <div class="empty-state">
       <p class="empty-title">Start your first investigation</p>
       <p class="muted">Log a claim you've seen, then record every place it appears.</p>
       <a class="button button-seed" href="/claims/new">New claim</a>
     </div>
   <% } else { %>
-    <ul class="claim-list">
-      <% claims.forEach((claim) => { %>
-        <li>
-          <a class="claim-row" href="/claims/<%= claim.id %>">
-            <span class="claim-row-text">"<%= claim.claim_text %>"</span>
-            <span class="claim-row-meta">
-              <span class="badge badge-<%= claim.status.replace(' ', '-') %>"><%= claim.status %></span>
-              <% if (claim.hook) { %><span class="tag">hook: <%= claim.hook %></span><% } %>
-              <span><%= claim.observation_count %> observation<%= claim.observation_count === 1 ? "" : "s" %></span>
-              <span>earliest: <%= formatDate(claim.earliest_observed_at) %></span>
-            </span>
-          </a>
-        </li>
-      <% }) %>
-    </ul>
+    <form class="filter-bar" method="get" action="/claims" role="search">
+      <div class="filter-field filter-search">
+        <label for="q">Search</label>
+        <input id="q" name="q" type="search" value="<%= filters.q %>" placeholder="Claim, hook or notes">
+      </div>
+      <div class="filter-field">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+          <option value="">Any status</option>
+          <% statuses.forEach((s) => { %>
+            <option value="<%= s %>" <%= filters.status === s ? "selected" : "" %>><%= s %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label for="location">Seen on</label>
+        <select id="location" name="location">
+          <option value="">Any location</option>
+          <% locations.forEach((loc) => { %>
+            <option value="<%= loc %>" <%= filters.location.toLowerCase() === loc.toLowerCase() ? "selected" : "" %>><%= loc %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="filter-field">
+        <label for="sort">Sort</label>
+        <select id="sort" name="sort">
+          <% Object.entries(sorts).forEach(([key, s]) => { %>
+            <option value="<%= key %>" <%= filters.sort === key ? "selected" : "" %>><%= s.label %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="filter-actions">
+        <button type="submit" class="button">Apply</button>
+        <% if (filtering || filters.sort !== "newest") { %><a class="clear-link" href="/claims">Clear</a><% } %>
+      </div>
+    </form>
+
+    <p class="result-count">
+      <% if (filtering) { %>
+        Showing <%= claims.length %> of <%= total %> claim<%= total === 1 ? "" : "s" %>
+      <% } else { %>
+        <%= total %> claim<%= total === 1 ? "" : "s" %>
+      <% } %>
+    </p>
+
+    <% if (claims.length === 0) { %>
+      <div class="empty-state">
+        <p class="empty-title">No claims match</p>
+        <p class="muted">Try a different search or remove a filter.</p>
+        <a class="button" href="/claims">Clear filters</a>
+      </div>
+    <% } else { %>
+      <ul class="claim-list">
+        <% claims.forEach((claim) => { %>
+          <li>
+            <a class="claim-row" href="/claims/<%= claim.id %>">
+              <span class="claim-row-text">"<%= claim.claim_text %>"</span>
+              <span class="claim-row-meta">
+                <span class="badge badge-<%= claim.status.replace(' ', '-') %>"><%= claim.status %></span>
+                <% if (claim.hook) { %><span class="tag">hook: <%= claim.hook %></span><% } %>
+                <span><%= claim.observation_count %> observation<%= claim.observation_count === 1 ? "" : "s" %></span>
+                <span>earliest: <%= formatDate(claim.earliest_observed_at) %></span>
+              </span>
+            </a>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
   <% } %>
 </section>
 <%- include("partials/footer") %>

@@ -28,19 +28,90 @@ export async function createClaim(pool, userId, { claimText, hook, status, notes
 }
 
 // Each claim comes with its observation count and earliest observation time.
-export async function listClaims(pool, userId) {
+// Sort options for the claims list. Only these keys are accepted, so the
+// ORDER BY clause never contains anything a user typed.
+export const CLAIM_SORTS = {
+  newest: { label: "Newest first", orderBy: "c.created_at DESC, c.id DESC" },
+  oldest: { label: "Oldest first", orderBy: "c.created_at ASC, c.id ASC" },
+  earliest: {
+    label: "Earliest observation",
+    orderBy: "earliest_observed_at ASC NULLS LAST, c.created_at DESC",
+  },
+  most: {
+    label: "Most observations",
+    orderBy: "observation_count DESC, c.created_at DESC",
+  },
+};
+
+// Escapes % and _ so a search for "100%" matches the text "100%" literally.
+function likePattern(text) {
+  return `%${text.replace(/[\\%_]/g, (ch) => "\\" + ch)}%`;
+}
+
+// Optional filters:
+//   q        - text to find in the claim, its hook or its notes
+//   status   - tracing / traced / dead end
+//   location - claims with at least one observation at this location
+//   sort     - a key of CLAIM_SORTS (defaults to newest)
+export async function listClaims(pool, userId, { q, status, location, sort } = {}) {
+  const where = ["c.user_id = $1"];
+  const params = [userId];
+  const add = (sql, value) => {
+    params.push(value);
+    where.push(sql.replaceAll("?", `$${params.length}`));
+  };
+
+  const search = (q || "").trim();
+  if (search) {
+    add(
+      "(c.claim_text ILIKE ? OR c.hook ILIKE ? OR c.notes ILIKE ?)",
+      likePattern(search)
+    );
+  }
+  if (CLAIM_STATUSES.includes(status)) add("c.status = ?", status);
+  const place = (location || "").trim();
+  if (place) {
+    add(
+      "EXISTS (SELECT 1 FROM observations lo WHERE lo.claim_id = c.id AND lower(lo.location) = lower(?))",
+      place
+    );
+  }
+
+  const order = (CLAIM_SORTS[sort] || CLAIM_SORTS.newest).orderBy;
   const { rows } = await pool.query(
     `SELECT c.*,
             COUNT(o.id)::int     AS observation_count,
             MIN(o.observed_at)   AS earliest_observed_at
        FROM claims c
        LEFT JOIN observations o ON o.claim_id = c.id
-      WHERE c.user_id = $1
+      WHERE ${where.join(" AND ")}
       GROUP BY c.id
-      ORDER BY c.created_at DESC`,
-    [userId]
+      ORDER BY ${order}`,
+    params
   );
   return rows;
+}
+
+export async function countClaims(pool, userId) {
+  const { rows } = await pool.query(
+    "SELECT COUNT(*)::int AS count FROM claims WHERE user_id = $1",
+    [userId]
+  );
+  return rows[0].count;
+}
+
+// The distinct locations in a user's observations, for the location filter.
+export async function listLocations(pool, userId) {
+  const { rows } = await pool.query(
+    `SELECT MIN(o.location) AS location
+       FROM observations o
+       JOIN claims c ON c.id = o.claim_id
+      WHERE c.user_id = $1
+      GROUP BY lower(o.location)
+      ORDER BY lower(MIN(o.location))`,
+    [userId]
+  );
+  return rows.map((r) => r.location);
 }
 
 // Returns null if the claim doesn't exist or belongs to someone else.

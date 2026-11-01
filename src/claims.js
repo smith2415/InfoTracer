@@ -4,8 +4,11 @@ import { fromDateTimeInput } from "./format.js";
 import { validateClaim, validateObservation, hasErrors } from "./validation.js";
 import {
   CLAIM_STATUSES,
+  CLAIM_SORTS,
   createClaim,
   listClaims,
+  countClaims,
+  listLocations,
   getClaim,
   updateClaim,
   deleteClaim,
@@ -93,8 +96,29 @@ export function claimsRouter(pool) {
 
   router.get("/claims", async (req, res, next) => {
     try {
-      const claims = await listClaims(pool, req.session.userId);
-      res.render("claims", { title: "Claims", claims });
+      const userId = req.session.userId;
+      const filters = {
+        q: typeof req.query.q === "string" ? req.query.q.trim().slice(0, 200) : "",
+        status: CLAIM_STATUSES.includes(req.query.status) ? req.query.status : "",
+        location: typeof req.query.location === "string" ? req.query.location.trim() : "",
+        sort: CLAIM_SORTS[req.query.sort] ? req.query.sort : "newest",
+      };
+      const [claims, total, locations] = await Promise.all([
+        listClaims(pool, userId, filters),
+        countClaims(pool, userId),
+        listLocations(pool, userId),
+      ]);
+      const filtering = Boolean(filters.q || filters.status || filters.location);
+      res.render("claims", {
+        title: "Claims",
+        claims,
+        total,
+        filters,
+        filtering,
+        locations,
+        statuses: CLAIM_STATUSES,
+        sorts: CLAIM_SORTS,
+      });
     } catch (err) {
       next(err);
     }
