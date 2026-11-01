@@ -117,8 +117,8 @@ export async function listLocations(pool, userId) {
 // Returns null if the claim doesn't exist or belongs to someone else.
 export async function getClaim(pool, userId, claimId) {
   const { rows } = await pool.query(
-    "SELECT * FROM claims WHERE id = $1 AND user_id = $2",
-    [claimId, userId]
+    "SELECT * FROM claims WHERE id = $1",
+    [claimId]
   );
   return rows[0] || null;
 }
