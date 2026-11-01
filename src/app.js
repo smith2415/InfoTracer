@@ -23,6 +23,11 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET } =
   app.set("trust proxy", 1);
 
   app.use(express.static(path.join(root, "public")));
+  // Chart.js for the dashboard, served from the installed package.
+  app.use(
+    "/vendor/chart.js",
+    express.static(path.join(root, "node_modules", "chart.js", "dist"), { maxAge: "7d" })
+  );
   app.use(express.urlencoded({ extended: false }));
 
   const PgStore = connectPgSimple(session);

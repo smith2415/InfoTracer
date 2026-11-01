@@ -21,6 +21,7 @@ import {
   addWeed,
   removeWeed,
   listWeeds,
+  getDashboardStats,
 } from "./models.js";
 
 // Where to go after marking or unmarking a weed: back to the Weeds view if
@@ -355,6 +356,17 @@ export function claimsRouter(pool) {
       if (!observation) return notFound(res);
       await setSeed(pool, req.session.userId, id);
       res.redirect(`/claims/${observation.claim_id}#observation-${id}`);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ---------- Dashboard ----------
+
+  router.get("/dashboard", requireLogin, async (req, res, next) => {
+    try {
+      const stats = await getDashboardStats(pool, req.session.userId);
+      res.render("dashboard", { title: "Dashboard", stats });
     } catch (err) {
       next(err);
     }
