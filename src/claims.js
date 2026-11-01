@@ -1,6 +1,7 @@
 import express from "express";
 import { requireLogin } from "./auth.js";
 import { fromDateTimeInput } from "./format.js";
+import { validateClaim, validateObservation, hasErrors } from "./validation.js";
 import {
   CLAIM_STATUSES,
   createClaim,
@@ -36,6 +37,31 @@ function claimFields(body) {
     notes: body.notes,
   };
 }
+
+// What the user typed, so a form with errors comes back filled in.
+function claimFromBody(body, id) {
+  return {
+    id,
+    claim_text: body.claim_text || "",
+    hook: body.hook || "",
+    status: CLAIM_STATUSES.includes(body.status) ? body.status : "tracing",
+    notes: body.notes || "",
+  };
+}
+
+function observationFromBody(body, id) {
+  return {
+    id,
+    observed_at_input: body.observed_at || "",
+    location: body.location || "",
+    poster: body.poster || "",
+    post_text: body.post_text || "",
+    url: body.url || "",
+    notes: body.notes || "",
+  };
+}
+
+const ERROR_SUMMARY = "Some details need fixing before this can be saved.";
 
 function observationFields(body) {
   return {
@@ -74,6 +100,17 @@ export function claimsRouter(pool) {
 
   router.post("/claims", async (req, res, next) => {
     try {
+      const errors = validateClaim(req.body);
+      if (hasErrors(errors)) {
+        return res.status(400).render("claim-form", {
+          title: "New claim",
+          claim: claimFromBody(req.body),
+          action: "/claims",
+          statuses: CLAIM_STATUSES,
+          errors,
+          errorSummary: ERROR_SUMMARY,
+        });
+      }
       const claim = await createClaim(pool, req.session.userId, claimFields(req.body));
       res.redirect(`/claims/${claim.id}`);
     } catch (err) {
@@ -112,7 +149,20 @@ export function claimsRouter(pool) {
   router.post("/claims/:id", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const claim = id && (await updateClaim(pool, req.session.userId, id, claimFields(req.body)));
+      const existing = id && (await getClaim(pool, req.session.userId, id));
+      if (!existing) return notFound(res);
+      const errors = validateClaim(req.body);
+      if (hasErrors(errors)) {
+        return res.status(400).render("claim-form", {
+          title: "Edit claim",
+          claim: claimFromBody(req.body, id),
+          action: `/claims/${id}`,
+          statuses: CLAIM_STATUSES,
+          errors,
+          errorSummary: ERROR_SUMMARY,
+        });
+      }
+      const claim = await updateClaim(pool, req.session.userId, id, claimFields(req.body));
       if (!claim) return notFound(res);
       res.redirect(`/claims/${id}`);
     } catch (err) {
@@ -170,8 +220,20 @@ export function claimsRouter(pool) {
   router.post("/claims/:id/observations", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const observation =
-        id && (await addObservation(pool, req.session.userId, id, observationFields(req.body)));
+      const claim = id && (await getClaim(pool, req.session.userId, id));
+      if (!claim) return notFound(res);
+      const errors = validateObservation(req.body);
+      if (hasErrors(errors)) {
+        return res.status(400).render("observation-form", {
+          title: "Add observation",
+          claim,
+          observation: observationFromBody(req.body),
+          action: `/claims/${id}/observations`,
+          errors,
+          errorSummary: ERROR_SUMMARY,
+        });
+      }
+      const observation = await addObservation(pool, req.session.userId, id, observationFields(req.body));
       if (!observation) return notFound(res);
       res.redirect(`/claims/${id}#observation-${observation.id}`);
     } catch (err) {
@@ -199,8 +261,21 @@ export function claimsRouter(pool) {
   router.post("/observations/:id", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const observation =
-        id && (await updateObservation(pool, req.session.userId, id, observationFields(req.body)));
+      const existing = id && (await getObservation(pool, req.session.userId, id));
+      if (!existing) return notFound(res);
+      const errors = validateObservation(req.body);
+      if (hasErrors(errors)) {
+        const claim = await getClaim(pool, req.session.userId, existing.claim_id);
+        return res.status(400).render("observation-form", {
+          title: "Edit observation",
+          claim,
+          observation: observationFromBody(req.body, id),
+          action: `/observations/${id}`,
+          errors,
+          errorSummary: ERROR_SUMMARY,
+        });
+      }
+      const observation = await updateObservation(pool, req.session.userId, id, observationFields(req.body));
       if (!observation) return notFound(res);
       res.redirect(`/claims/${observation.claim_id}#observation-${id}`);
     } catch (err) {

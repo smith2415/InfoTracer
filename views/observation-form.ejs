@@ -1,14 +1,23 @@
 <%- include("partials/header") %>
+<% const errors = locals.errors || {}; %>
+<% const invalid = (field) => errors[field] ? `aria-invalid="true" aria-describedby="${field}-error" class="has-error"` : ""; %>
 <p class="breadcrumb"><a href="/claims/<%= claim.id %>">← "<%= claim.claim_text %>"</a></p>
 <section class="form-card">
   <h1><%= title %></h1>
-  <p class="muted">Leave anything you don't know blank; it shows as "-" until you fill it in.</p>
-  <form method="post" action="<%= action %>">
+  <% if (locals.errorSummary) { %>
+    <p class="form-error" role="alert"><%= errorSummary %></p>
+  <% } else { %>
+    <p class="muted">Leave anything you don't know blank; it shows as "-" until you fill it in.</p>
+  <% } %>
+  <form method="post" action="<%= action %>" novalidate>
     <label for="observed_at">Posted at (UTC)</label>
-    <input id="observed_at" name="observed_at" type="datetime-local" value="<%= toDateTimeInput(observation.observed_at) %>">
+    <input id="observed_at" name="observed_at" type="datetime-local"
+      value="<%= observation.observed_at_input !== undefined ? observation.observed_at_input : toDateTimeInput(observation.observed_at) %>" <%- invalid("observed_at") %>>
+    <%- include("partials/field-error", { errors, field: "observed_at" }) %>
 
-    <label for="location">Location</label>
-    <input id="location" name="location" value="<%= observation.location || "" %>" placeholder="X, Instagram, a news site" list="location-options">
+    <label for="location">Location <span class="required">required</span></label>
+    <input id="location" name="location" value="<%= observation.location || "" %>" placeholder="X, Instagram, a news site" list="location-options" <%- invalid("location") %>>
+    <%- include("partials/field-error", { errors, field: "location" }) %>
     <datalist id="location-options">
       <option value="X"><option value="Bluesky"><option value="Instagram"><option value="TikTok">
       <option value="Facebook"><option value="Reddit"><option value="Telegram"><option value="YouTube">
@@ -19,14 +28,18 @@
     <input id="poster" name="poster" value="<%= observation.poster || "" %>" placeholder="@account, organization or author">
 
     <label for="post_text">Exact wording</label>
-    <textarea id="post_text" name="post_text" rows="4" maxlength="2000" class="mono"><%= observation.post_text || "" %></textarea>
+    <textarea id="post_text" name="post_text" rows="4" class="mono <%= errors.post_text ? 'has-error' : '' %>"
+      <% if (errors.post_text) { %>aria-invalid="true" aria-describedby="post_text-error"<% } %>><%= observation.post_text || "" %></textarea>
+    <%- include("partials/field-error", { errors, field: "post_text" }) %>
     <p class="hint">Copy the post word for word, up to 2,000 characters.</p>
 
     <label for="url">Link</label>
-    <input id="url" name="url" type="url" value="<%= observation.url || "" %>" placeholder="https://">
+    <input id="url" name="url" type="url" value="<%= observation.url || "" %>" placeholder="https://" <%- invalid("url") %>>
+    <%- include("partials/field-error", { errors, field: "url" }) %>
 
     <label for="notes">Notes</label>
-    <textarea id="notes" name="notes" rows="3" maxlength="2000"><%= observation.notes || "" %></textarea>
+    <textarea id="notes" name="notes" rows="3" <%- invalid("notes") %>><%= observation.notes || "" %></textarea>
+    <%- include("partials/field-error", { errors, field: "notes" }) %>
 
     <div class="form-actions">
       <button type="submit" class="button button-seed">Save observation</button>
