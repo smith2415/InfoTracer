@@ -1,0 +1,17 @@
+<%- include("partials/header") %>
+<section class="auth-card">
+  <h1>Log in</h1>
+  <p class="muted">Pick up your investigations where you left off.</p>
+  <% if (error) { %>
+    <p class="form-error" role="alert"><%= error %></p>
+  <% } %>
+  <form method="post" action="/login" novalidate>
+    <label for="email">Email</label>
+    <input id="email" name="email" type="email" autocomplete="email" value="<%= email %>" placeholder="name@example.com" required>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit" class="primary-button">Log in</button>
+  </form>
+  <p class="switch">New to InfoTracer? <a href="/signup">Create an account</a></p>
+</section>
+<%- include("partials/footer") %>

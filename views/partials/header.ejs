@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %> · InfoTracer</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 21v-9"/>
+        <path d="M12 12c0-4 2.5-6.5 7-7c0 4.5-2.5 7-7 7z"/>
+        <path d="M12 15c0-3-2-5-6-5.5c0 3.5 2 5.5 6 5.5z"/>
+      </svg>
+      InfoTracer
+    </a>
+    <% if (currentUser) { %>
+      <nav class="site-nav" aria-label="Main">
+        <a href="/claims">Claims</a>
+        <span class="user-email"><%= currentUser.email %></span>
+        <form method="post" action="/logout" class="inline-form">
+          <button type="submit" class="link-button">Log out</button>
+        </form>
+      </nav>
+    <% } %>
+  </header>
+  <main class="page">

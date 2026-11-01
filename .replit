@@ -1,0 +1,6 @@
+modules = ["nodejs-20", "postgresql-16"]
+run = "npm start"
+
+[deployment]
+run = ["sh", "-c", "npm start"]
+build = ["sh", "-c", "npm install"]
