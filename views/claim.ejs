@@ -37,32 +37,7 @@
   <% } else { %>
     <ol class="evidence-list">
       <% observations.forEach((o) => { %>
-        <li class="evidence-card <%= o.is_seed ? 'is-seed' : '' %>" id="observation-<%= o.id %>">
-          <div class="evidence-top">
-            <span><%= formatDateTime(o.observed_at) %> · <%= o.location %></span>
-            <span class="evidence-flags">
-              <% if (o.is_seed) { %><span class="flag flag-seed">seed</span><% } %>
-              <span class="flag"><%= o.found_by %></span>
-            </span>
-          </div>
-          <p class="evidence-poster"><%= dash(o.poster) %></p>
-          <p class="evidence-text"><%= o.post_text ? '"' + o.post_text + '"' : "post text: -" %></p>
-          <dl class="evidence-details">
-            <dt>Link</dt>
-            <% const link = safeUrl(o.url); %>
-            <dd><% if (link) { %><a href="<%= link %>" target="_blank" rel="noopener noreferrer"><%= o.url %></a><% } else { %><%= dash(o.url) %><% } %></dd>
-            <% if (o.notes) { %><dt>Notes</dt><dd class="pre"><%= o.notes %></dd><% } %>
-          </dl>
-          <div class="evidence-actions">
-            <% if (!o.is_seed) { %>
-              <form method="post" action="/observations/<%= o.id %>/seed" class="inline-form">
-                <button type="submit" class="link-button seed-link">Mark as seed</button>
-              </form>
-            <% } %>
-            <a href="/observations/<%= o.id %>/edit">Edit</a>
-            <a class="weed-link" href="/observations/<%= o.id %>/delete">Delete</a>
-          </div>
-        </li>
+        <%- include("partials/evidence-card", { o, context: "claim" }) %>
       <% }) %>
     </ol>
   <% } %>

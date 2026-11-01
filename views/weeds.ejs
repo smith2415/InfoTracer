@@ -1,0 +1,24 @@
+<%- include("partials/header") %>
+<section>
+  <div class="page-head">
+    <div>
+      <h1>Weeds <span class="count"><%= weeds.length %></span></h1>
+      <p class="muted">Observations you've assessed as intentionally spreading disinformation, across all your claims.</p>
+    </div>
+  </div>
+
+  <% if (weeds.length === 0) { %>
+    <div class="empty-state">
+      <p class="empty-title">No weeds yet</p>
+      <p class="muted">On a claim's page, choose "Mark as weed" on any observation you believe is deliberately pushing a false claim.</p>
+      <a class="button" href="/claims">Go to your claims</a>
+    </div>
+  <% } else { %>
+    <ol class="evidence-list">
+      <% weeds.forEach((o) => { %>
+        <%- include("partials/evidence-card", { o, context: "weeds" }) %>
+      <% }) %>
+    </ol>
+  <% } %>
+</section>
+<%- include("partials/footer") %>

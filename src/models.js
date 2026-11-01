@@ -77,7 +77,10 @@ export async function deleteClaim(pool, userId, claimId) {
 // Oldest first; observations without a time go to the end until filled in.
 export async function listObservations(pool, userId, claimId) {
   const { rows } = await pool.query(
-    `SELECT o.*
+    `SELECT o.*,
+            EXISTS (
+              SELECT 1 FROM weeds w WHERE w.observation_id = o.id AND w.user_id = $2
+            ) AS is_weed
        FROM observations o
        JOIN claims c ON c.id = o.claim_id
       WHERE o.claim_id = $1 AND c.user_id = $2
@@ -184,4 +187,44 @@ export async function setSeed(pool, userId, observationId) {
   } finally {
     client.release();
   }
+}
+
+// ---------- Weeds ----------
+// A weed is a user's assessment that an observation is intentionally
+// spreading disinformation. Each row in the weeds table means
+// "this user marked this observation as a weed."
+
+// Returns false if the observation isn't the user's.
+export async function addWeed(pool, userId, observationId) {
+  const owned = await getObservation(pool, userId, observationId);
+  if (!owned) return false;
+  await pool.query(
+    `INSERT INTO weeds (user_id, observation_id) VALUES ($1, $2)
+     ON CONFLICT DO NOTHING`,
+    [userId, observationId]
+  );
+  return true;
+}
+
+export async function removeWeed(pool, userId, observationId) {
+  const { rowCount } = await pool.query(
+    "DELETE FROM weeds WHERE user_id = $1 AND observation_id = $2",
+    [userId, observationId]
+  );
+  return rowCount > 0;
+}
+
+// Every observation the user has weeded, with its claim, newest weed first.
+export async function listWeeds(pool, userId) {
+  const { rows } = await pool.query(
+    `SELECT o.*, true AS is_weed, w.created_at AS weeded_at,
+            c.id AS claim_id, c.claim_text
+       FROM weeds w
+       JOIN observations o ON o.id = w.observation_id
+       JOIN claims c ON c.id = o.claim_id
+      WHERE w.user_id = $1 AND c.user_id = $1
+      ORDER BY w.created_at DESC, o.id DESC`,
+    [userId]
+  );
+  return rows;
 }

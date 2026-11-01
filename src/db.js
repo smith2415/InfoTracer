@@ -54,5 +54,15 @@ export async function migrate(pool) {
     -- At most one seed (origin) per claim.
     CREATE UNIQUE INDEX IF NOT EXISTS observations_one_seed_per_claim
       ON observations (claim_id) WHERE is_seed;
+
+    -- Junction table: "this user marked this observation as a weed"
+    -- (an observation assessed as intentionally spreading disinformation).
+    CREATE TABLE IF NOT EXISTS weeds (
+      user_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      observation_id INTEGER NOT NULL REFERENCES observations(id) ON DELETE CASCADE,
+      created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+      PRIMARY KEY (user_id, observation_id)
+    );
+    CREATE INDEX IF NOT EXISTS weeds_observation_id_idx ON weeds (observation_id);
   `);
 }

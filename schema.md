@@ -47,8 +47,18 @@ One row per sighting of a claim.
 | created_at | date and time | Set automatically |
 
 ### weeds
-*Coming in Spine #5.* The junction table between users and observations, my
-version of stars.
+The junction table between users and observations; my version of stars. Each
+row means "this user marked this observation as a weed," an observation they
+assess as intentionally spreading disinformation. One table for everyone.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| user_id | number | Links to users.id |
+| observation_id | number | Links to observations.id |
+| created_at | date and time | When it was marked; set automatically |
+
+**Primary key:** user_id + observation_id together, so a user can weed an
+observation only once.
 
 ### session
 Created by the login system (connect-pg-simple) to keep users signed in. It
@@ -60,8 +70,10 @@ isn't part of the app's own data model.
   exactly one owner.
 - **claims → observations: one-to-many.** Each claim has many observations,
   listed oldest first, with blank times at the end.
-- Deleting a user deletes their claims, and deleting a claim deletes its
-  observations.
+- **users ↔ observations (through weeds): many-to-many.** A user can weed many
+  observations, and the weeds table records each one.
+- Deleting a user deletes their claims and weeds; deleting a claim deletes its
+  observations; deleting an observation deletes its weeds.
 - Every query in `src/models.js` is filtered by the signed-in user, so no user
   can read or change another user's claims or observations.
 
@@ -69,11 +81,13 @@ isn't part of the app's own data model.
 erDiagram
     users ||--o{ claims : owns
     claims ||--o{ observations : has
+    users ||--o{ weeds : marks
+    observations ||--o{ weeds : "marked as"
 ```
 
 ## Compared with PLAN.md section 3
 
-The tables built so far match the plan's columns and types. A few rules were
+All four tables match the plan's columns, types and keys. A few rules were
 added in the database itself to enforce the plan:
 
 - `status` and `found_by` only accept the values listed in the plan.
