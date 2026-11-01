@@ -213,6 +213,7 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .tag { background: #26282d; color: #b4b2a9; font-family: var(--mono); }
 .flag { background: #26282d; color: var(--muted); }
 .flag-seed { background: #1d2a12; color: var(--seed-light); }
+.flag-weed { background: #2a1515; color: #f09595; }
 
 .claim-list { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); }
 .claim-list li + li { border-top: 1px solid var(--border); }
@@ -251,6 +252,10 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
   flex-direction: column;
 }
 .evidence-card.is-seed { border-color: var(--seed); }
+.evidence-card.is-weed { border-color: #791f1f; }
+.evidence-card.is-seed.is-weed { border-color: var(--seed); box-shadow: inset 3px 0 0 #a32d2d; }
+.evidence-claim { display: block; margin-bottom: 8px; font-size: 13px; color: var(--text); text-decoration: none; font-weight: 500; overflow-wrap: anywhere; }
+.evidence-claim:hover { color: var(--seed-light); }
 .evidence-card:target { box-shadow: 0 0 0 2px var(--seed-light); }
 .evidence-top { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; }
 .evidence-flags { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; }
@@ -260,12 +265,15 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .evidence-details dt { color: var(--muted); }
 .evidence-details dd { margin: 0; overflow-wrap: anywhere; }
 .evidence-details dd.pre { white-space: pre-wrap; }
-.evidence-actions { margin-top: auto; display: flex; gap: 14px; font-size: 13px; align-items: center; }
+.evidence-actions { margin-top: auto; display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; align-items: center; }
+.evidence-actions a, .evidence-actions .link-button { white-space: nowrap; }
 .evidence-actions a { color: var(--muted); text-decoration: none; }
 .evidence-actions a:hover { color: var(--text); }
 .seed-link { color: var(--seed-light); font-size: 13px; }
 .seed-link:hover { color: #c0dd97; }
 .evidence-actions .weed-link:hover { color: #f09595; }
+.weed-toggle { color: #e24b4a; font-size: 13px; }
+.weed-toggle:hover { color: #f7c1c1; }
 
 .form-card {
   max-width: 620px;

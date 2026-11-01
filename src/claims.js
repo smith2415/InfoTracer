@@ -15,7 +15,18 @@ import {
   updateObservation,
   deleteObservation,
   setSeed,
+  addWeed,
+  removeWeed,
+  listWeeds,
 } from "./models.js";
+
+// Where to go after marking or unmarking a weed: back to the Weeds view if
+// that's where the click came from, otherwise to the observation's claim.
+function afterWeed(body, observation) {
+  return body.return_to === "weeds"
+    ? "/weeds"
+    : `/claims/${observation.claim_id}#observation-${observation.id}`;
+}
 
 // Turns ":id" into a number, or null for anything that isn't a positive integer.
 function idParam(value) {
@@ -320,6 +331,41 @@ export function claimsRouter(pool) {
       if (!observation) return notFound(res);
       await setSeed(pool, req.session.userId, id);
       res.redirect(`/claims/${observation.claim_id}#observation-${id}`);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ---------- Weeds ----------
+
+  router.get("/weeds", requireLogin, async (req, res, next) => {
+    try {
+      const weeds = await listWeeds(pool, req.session.userId);
+      res.render("weeds", { title: "Weeds", weeds });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/observations/:id/weed", async (req, res, next) => {
+    try {
+      const id = idParam(req.params.id);
+      const observation = id && (await getObservation(pool, req.session.userId, id));
+      if (!observation) return notFound(res);
+      await addWeed(pool, req.session.userId, id);
+      res.redirect(afterWeed(req.body, observation));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/observations/:id/unweed", async (req, res, next) => {
+    try {
+      const id = idParam(req.params.id);
+      const observation = id && (await getObservation(pool, req.session.userId, id));
+      if (!observation) return notFound(res);
+      await removeWeed(pool, req.session.userId, id);
+      res.redirect(afterWeed(req.body, observation));
     } catch (err) {
       next(err);
     }

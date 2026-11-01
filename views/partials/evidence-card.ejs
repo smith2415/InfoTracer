@@ -1,0 +1,37 @@
+<% const classes = ["evidence-card", o.is_seed ? "is-seed" : "", o.is_weed ? "is-weed" : ""].join(" ").trim(); %>
+<li class="<%= classes %>" id="observation-<%= o.id %>">
+  <% if (context === "weeds") { %>
+    <a class="evidence-claim" href="/claims/<%= o.claim_id %>#observation-<%= o.id %>">"<%= o.claim_text %>"</a>
+  <% } %>
+  <div class="evidence-top">
+    <span><%= formatDateTime(o.observed_at) %> · <%= o.location %></span>
+    <span class="evidence-flags">
+      <% if (o.is_seed) { %><span class="flag flag-seed">seed</span><% } %>
+      <% if (o.is_weed) { %><span class="flag flag-weed">weed</span><% } %>
+      <span class="flag"><%= o.found_by %></span>
+    </span>
+  </div>
+  <p class="evidence-poster"><%= dash(o.poster) %></p>
+  <p class="evidence-text"><%= o.post_text ? '"' + o.post_text + '"' : "post text: -" %></p>
+  <dl class="evidence-details">
+    <dt>Link</dt>
+    <% const link = safeUrl(o.url); %>
+    <dd><% if (link) { %><a href="<%= link %>" target="_blank" rel="noopener noreferrer"><%= o.url %></a><% } else { %><%= dash(o.url) %><% } %></dd>
+    <% if (o.notes) { %><dt>Notes</dt><dd class="pre"><%= o.notes %></dd><% } %>
+  </dl>
+  <div class="evidence-actions">
+    <% if (context === "claim" && !o.is_seed) { %>
+      <form method="post" action="/observations/<%= o.id %>/seed" class="inline-form">
+        <button type="submit" class="link-button seed-link">Mark as seed</button>
+      </form>
+    <% } %>
+    <form method="post" action="/observations/<%= o.id %>/<%= o.is_weed ? 'unweed' : 'weed' %>" class="inline-form">
+      <% if (context === "weeds") { %><input type="hidden" name="return_to" value="weeds"><% } %>
+      <button type="submit" class="link-button weed-toggle"><%= o.is_weed ? "Remove weed" : "Mark as weed" %></button>
+    </form>
+    <% if (context === "claim") { %>
+      <a href="/observations/<%= o.id %>/edit">Edit</a>
+      <a class="weed-link" href="/observations/<%= o.id %>/delete">Delete</a>
+    <% } %>
+  </div>
+</li>
