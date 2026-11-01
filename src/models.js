@@ -352,7 +352,7 @@ export async function getDashboardStats(pool, userId) {
     tracedClaims: c.traced_claims,
     observationCount: c.observation_count,
     weedCount: c.weed_count,
-    weedShare: weedShare(c.weed_count, c.total_claims),
+    weedShare: weedShare(c.weed_count, c.observation_count),
     topSeedLocation: topSeed.rows[0] || null,
     weedsByLocation: weedsByLocation.rows,
   };
