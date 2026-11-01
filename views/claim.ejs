@@ -1,0 +1,70 @@
+<%- include("partials/header") %>
+<p class="breadcrumb"><a href="/claims">← Your claims</a></p>
+
+<section class="case-file">
+  <div class="case-head">
+    <div>
+      <p class="label">Claim</p>
+      <h1>"<%= claim.claim_text %>"</h1>
+      <div class="case-meta">
+        <span class="badge badge-<%= claim.status.replace(' ', '-') %>"><%= claim.status %></span>
+        <span class="tag">hook: <%= dash(claim.hook) %></span>
+        <span class="muted-inline">opened <%= formatDate(claim.created_at) %></span>
+      </div>
+    </div>
+    <div class="case-actions">
+      <a class="button" href="/claims/<%= claim.id %>/edit">Edit</a>
+      <a class="button button-weed" href="/claims/<%= claim.id %>/delete">Delete</a>
+    </div>
+  </div>
+  <% if (claim.notes) { %>
+    <p class="label">Notes</p>
+    <p class="notes"><%= claim.notes %></p>
+  <% } %>
+</section>
+
+<section>
+  <div class="page-head">
+    <h2>Observations <span class="count"><%= observations.length %></span></h2>
+    <a class="button button-seed" href="/claims/<%= claim.id %>/observations/new">Add observation</a>
+  </div>
+
+  <% if (observations.length === 0) { %>
+    <div class="empty-state">
+      <p class="empty-title">No observations yet</p>
+      <p class="muted">Record each place this claim appears: when, where and who posted it.</p>
+    </div>
+  <% } else { %>
+    <ol class="evidence-list">
+      <% observations.forEach((o) => { %>
+        <li class="evidence-card <%= o.is_seed ? 'is-seed' : '' %>" id="observation-<%= o.id %>">
+          <div class="evidence-top">
+            <span><%= formatDateTime(o.observed_at) %> · <%= o.location %></span>
+            <span class="evidence-flags">
+              <% if (o.is_seed) { %><span class="flag flag-seed">seed</span><% } %>
+              <span class="flag"><%= o.found_by %></span>
+            </span>
+          </div>
+          <p class="evidence-poster"><%= dash(o.poster) %></p>
+          <p class="evidence-text"><%= o.post_text ? '"' + o.post_text + '"' : "post text: -" %></p>
+          <dl class="evidence-details">
+            <dt>Link</dt>
+            <% const link = safeUrl(o.url); %>
+            <dd><% if (link) { %><a href="<%= link %>" target="_blank" rel="noopener noreferrer"><%= o.url %></a><% } else { %><%= dash(o.url) %><% } %></dd>
+            <% if (o.notes) { %><dt>Notes</dt><dd class="pre"><%= o.notes %></dd><% } %>
+          </dl>
+          <div class="evidence-actions">
+            <% if (!o.is_seed) { %>
+              <form method="post" action="/observations/<%= o.id %>/seed" class="inline-form">
+                <button type="submit" class="link-button seed-link">Mark as seed</button>
+              </form>
+            <% } %>
+            <a href="/observations/<%= o.id %>/edit">Edit</a>
+            <a class="weed-link" href="/observations/<%= o.id %>/delete">Delete</a>
+          </div>
+        </li>
+      <% }) %>
+    </ol>
+  <% } %>
+</section>
+<%- include("partials/footer") %>

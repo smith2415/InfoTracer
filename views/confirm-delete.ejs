@@ -1,0 +1,11 @@
+<%- include("partials/header") %>
+<section class="form-card confirm-card">
+  <h1><%= heading %></h1>
+  <p class="confirm-quote">"<%= quote %>"</p>
+  <p class="muted"><%= warning %></p>
+  <form method="post" action="<%= action %>" class="form-actions">
+    <button type="submit" class="button button-weed-solid">Yes, delete</button>
+    <a class="button" href="<%= cancel %>">Cancel</a>
+  </form>
+</section>
+<%- include("partials/footer") %>

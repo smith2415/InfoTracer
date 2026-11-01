@@ -3,7 +3,9 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { authRouter, requireLogin } from "./auth.js";
+import { authRouter } from "./auth.js";
+import { claimsRouter } from "./claims.js";
+import * as format from "./format.js";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -40,6 +42,9 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET } =
     })
   );
 
+  // Display helpers (dash, formatDateTime, ...) for every page.
+  Object.assign(app.locals, format);
+
   // Makes the signed-in user available to every page.
   app.use((req, res, next) => {
     res.locals.currentUser = req.session.userId
@@ -54,10 +59,7 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET } =
 
   app.use(authRouter(pool));
 
-  // Placeholder until claims are built in Spine #2 and #3.
-  app.get("/claims", requireLogin, (req, res) => {
-    res.render("claims", { title: "Claims" });
-  });
+  app.use(claimsRouter(pool));
 
   app.use((req, res) => {
     res.status(404).render("message", {
