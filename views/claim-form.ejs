@@ -1,0 +1,30 @@
+<%- include("partials/header") %>
+<section class="form-card">
+  <h1><%= title %></h1>
+  <form method="post" action="<%= action %>">
+    <label for="claim_text">Claim</label>
+    <textarea id="claim_text" name="claim_text" rows="3" placeholder="$12 billion was stolen from the bank"><%= claim.claim_text || "" %></textarea>
+    <p class="hint">The claim as you first saw it.</p>
+
+    <label for="hook">Hook</label>
+    <input id="hook" name="hook" value="<%= claim.hook || "" %>" placeholder="$12 billion">
+    <p class="hint">The distinctive phrase that repeats as the claim spreads. This is what you'll search for.</p>
+
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <% statuses.forEach((status) => { %>
+        <option value="<%= status %>" <%= claim.status === status ? "selected" : "" %>><%= status %></option>
+      <% }) %>
+    </select>
+
+    <label for="notes">Notes</label>
+    <textarea id="notes" name="notes" rows="4" maxlength="2000"><%= claim.notes || "" %></textarea>
+    <p class="hint">Up to 2,000 characters.</p>
+
+    <div class="form-actions">
+      <button type="submit" class="button button-seed">Save claim</button>
+      <a class="button" href="<%= claim.id ? '/claims/' + claim.id : '/claims' %>">Cancel</a>
+    </div>
+  </form>
+</section>
+<%- include("partials/footer") %>

@@ -1,9 +1,32 @@
 <%- include("partials/header") %>
 <section>
-  <h1>Your claims</h1>
-  <div class="empty-state">
-    <p class="empty-title">Start your first investigation</p>
-    <p class="muted">Logging claims and their observations is coming in the next features.</p>
+  <div class="page-head">
+    <h1>Your claims</h1>
+    <a class="button button-seed" href="/claims/new">New claim</a>
   </div>
+
+  <% if (claims.length === 0) { %>
+    <div class="empty-state">
+      <p class="empty-title">Start your first investigation</p>
+      <p class="muted">Log a claim you've seen, then record every place it appears.</p>
+      <a class="button button-seed" href="/claims/new">New claim</a>
+    </div>
+  <% } else { %>
+    <ul class="claim-list">
+      <% claims.forEach((claim) => { %>
+        <li>
+          <a class="claim-row" href="/claims/<%= claim.id %>">
+            <span class="claim-row-text">"<%= claim.claim_text %>"</span>
+            <span class="claim-row-meta">
+              <span class="badge badge-<%= claim.status.replace(' ', '-') %>"><%= claim.status %></span>
+              <% if (claim.hook) { %><span class="tag">hook: <%= claim.hook %></span><% } %>
+              <span><%= claim.observation_count %> observation<%= claim.observation_count === 1 ? "" : "s" %></span>
+              <span>earliest: <%= formatDate(claim.earliest_observed_at) %></span>
+            </span>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
 </section>
 <%- include("partials/footer") %>
