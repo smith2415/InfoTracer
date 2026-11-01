@@ -299,3 +299,61 @@ export async function listWeeds(pool, userId) {
   );
   return rows;
 }
+
+// ---------- Dashboard ----------
+
+// Share of observations marked as weeds, as a whole-number percentage.
+// Returns null when there are no observations yet (nothing to divide by).
+export function weedShare(weedCount, observationCount) {
+  if (!observationCount) return null;
+  return Math.round((weedCount / observationCount) * 100);
+}
+
+export async function getDashboardStats(pool, userId) {
+  const [counts, topSeed, weedsByLocation] = await Promise.all([
+    pool.query(
+      `SELECT
+         (SELECT COUNT(*)::int FROM claims WHERE user_id = $1) AS total_claims,
+         (SELECT COUNT(*)::int FROM claims WHERE user_id = $1 AND status = 'traced') AS traced_claims,
+         (SELECT COUNT(*)::int FROM observations o JOIN claims c ON c.id = o.claim_id
+           WHERE c.user_id = $1) AS observation_count,
+         (SELECT COUNT(*)::int FROM weeds w
+            JOIN observations o ON o.id = w.observation_id
+            JOIN claims c ON c.id = o.claim_id
+           WHERE w.user_id = $1 AND c.user_id = $1) AS weed_count`,
+      [userId]
+    ),
+    // Where seeds (origins) most often appear. Locations are grouped
+    // ignoring case, so "x" and "X" count together.
+    pool.query(
+      `SELECT MIN(o.location) AS location, COUNT(*)::int AS count
+         FROM observations o JOIN claims c ON c.id = o.claim_id
+        WHERE c.user_id = $1 AND o.is_seed
+        GROUP BY lower(o.location)
+        ORDER BY count DESC, lower(MIN(o.location))
+        LIMIT 1`,
+      [userId]
+    ),
+    pool.query(
+      `SELECT MIN(o.location) AS location, COUNT(*)::int AS count
+         FROM weeds w
+         JOIN observations o ON o.id = w.observation_id
+         JOIN claims c ON c.id = o.claim_id
+        WHERE w.user_id = $1 AND c.user_id = $1
+        GROUP BY lower(o.location)
+        ORDER BY count DESC, lower(MIN(o.location))`,
+      [userId]
+    ),
+  ]);
+
+  const c = counts.rows[0];
+  return {
+    totalClaims: c.total_claims,
+    tracedClaims: c.traced_claims,
+    observationCount: c.observation_count,
+    weedCount: c.weed_count,
+    weedShare: weedShare(c.weed_count, c.observation_count),
+    topSeedLocation: topSeed.rows[0] || null,
+    weedsByLocation: weedsByLocation.rows,
+  };
+}

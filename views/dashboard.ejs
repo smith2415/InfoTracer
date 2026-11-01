@@ -1,0 +1,96 @@
+<%- include("partials/header") %>
+<section>
+  <div class="page-head">
+    <div>
+      <h1>Dashboard</h1>
+      <p class="muted">Patterns across all your investigations.</p>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <p class="stat-label">Claims traced</p>
+      <p class="stat-value"><%= stats.tracedClaims %></p>
+      <p class="stat-note">of <%= stats.totalClaims %> claim<%= stats.totalClaims === 1 ? "" : "s" %> logged</p>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Seeds most often appear on</p>
+      <% if (stats.topSeedLocation) { %>
+        <p class="stat-value stat-value-text seed-text"><%= stats.topSeedLocation.location %></p>
+        <p class="stat-note"><%= stats.topSeedLocation.count %> seed<%= stats.topSeedLocation.count === 1 ? "" : "s" %></p>
+      <% } else { %>
+        <p class="stat-value">-</p>
+        <p class="stat-note">Mark a seed on a claim to see this</p>
+      <% } %>
+    </div>
+    <div class="stat-card">
+      <p class="stat-label">Observations marked as weeds</p>
+      <p class="stat-value weed-text" data-stat="weed-share"><%= stats.weedShare === null ? "-" : stats.weedShare + "%" %></p>
+      <p class="stat-note"><%= stats.weedCount %> of <%= stats.observationCount %> observation<%= stats.observationCount === 1 ? "" : "s" %></p>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h2>Weeds by location</h2>
+    <p class="muted">Where you've found observations deliberately spreading disinformation.</p>
+    <% if (stats.weedsByLocation.length === 0) { %>
+      <div class="empty-state">
+        <p class="empty-title">No weeds yet</p>
+        <p class="muted">Mark observations as weeds on a claim's page, and this chart will show where they appear.</p>
+      </div>
+    <% } else { %>
+      <div class="chart-box" style="height: <%= Math.max(160, stats.weedsByLocation.length * 44 + 40) %>px">
+        <canvas id="weeds-chart" role="img" aria-label="Bar chart of weeds by location"></canvas>
+      </div>
+      <table class="chart-table">
+        <caption>Weeds by location</caption>
+        <thead><tr><th scope="col">Location</th><th scope="col">Weeds</th></tr></thead>
+        <tbody>
+          <% stats.weedsByLocation.forEach((row) => { %>
+            <tr><td><%= row.location %></td><td><%= row.count %></td></tr>
+          <% }) %>
+        </tbody>
+      </table>
+      <script type="application/json" id="weeds-data"><%- JSON.stringify(stats.weedsByLocation).replace(/</g, "\\u003c") %></script>
+      <script src="/vendor/chart.js/chart.umd.min.js"></script>
+      <script>
+        (function () {
+          var rows = JSON.parse(document.getElementById("weeds-data").textContent);
+          if (!window.Chart) return; // the table below the chart still shows the numbers
+          document.querySelector(".chart-table").classList.add("visually-hidden");
+          new Chart(document.getElementById("weeds-chart"), {
+            type: "bar",
+            data: {
+              labels: rows.map(function (r) { return r.location; }),
+              datasets: [{
+                label: "Weeds",
+                data: rows.map(function (r) { return r.count; }),
+                backgroundColor: "rgba(226, 75, 74, 0.35)",
+                borderColor: "#e24b4a",
+                borderWidth: 1,
+                borderRadius: 4,
+                maxBarThickness: 28
+              }]
+            },
+            options: {
+              indexAxis: "y",
+              maintainAspectRatio: false,
+              animation: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  ticks: { precision: 0, color: "#9a988f" },
+                  grid: { color: "#26282d" },
+                  title: { display: true, text: "Weeds", color: "#9a988f" }
+                },
+                y: { ticks: { color: "#e6e4dd" }, grid: { display: false } }
+              }
+            }
+          });
+        })();
+      </script>
+    <% } %>
+  </div>
+</section>
+<%- include("partials/footer") %>
