@@ -1,5 +1,5 @@
 modules = ["nodejs-20", "web", "postgresql-16"]
-run = "PORT=5000 npm start"
+run = "npm install --omit=dev --no-audit --no-fund; PORT=5000 npm start"
 
 [deployment]
 run = ["sh", "-c", "PORT=5000 npm start"]
@@ -27,7 +27,7 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=5000 npm start"
+args = "npm install --omit=dev --no-audit --no-fund; PORT=5000 npm start"
 waitForPort = 5000
 
 [workflows.workflow.metadata]

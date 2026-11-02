@@ -1,6 +1,7 @@
 # Running InfoTracer on Replit
 
-- The `Start application` workflow runs `PORT=5000 npm start` for the
+- The `Start application` workflow runs `npm install --omit=dev` (so packages
+  added by a merge are installed) and then `PORT=5000 npm start` for the
   Replit web preview. Port 5000 is mapped to the public web port (80).
 - Publishing uses the same port, and its build runs `npm ci --omit=dev`, which
   installs only the packages the app needs to run.
