@@ -64,5 +64,20 @@ export async function migrate(pool) {
       PRIMARY KEY (user_id, observation_id)
     );
     CREATE INDEX IF NOT EXISTS weeds_observation_id_idx ON weeds (observation_id);
+
+    -- Fact-check articles a user has pinned to a claim (from the lookup).
+    CREATE TABLE IF NOT EXISTS pinned_fact_checks (
+      id             SERIAL PRIMARY KEY,
+      claim_id       INTEGER NOT NULL REFERENCES claims(id) ON DELETE CASCADE,
+      url            TEXT NOT NULL,
+      publisher      TEXT,
+      title          TEXT,
+      rating         TEXT,
+      review_date    TIMESTAMPTZ,
+      reviewed_claim TEXT,
+      claimant       TEXT,
+      created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+      UNIQUE (claim_id, url)
+    );
   `);
 }

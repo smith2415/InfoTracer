@@ -357,3 +357,65 @@ export async function getDashboardStats(pool, userId) {
     weedsByLocation: weedsByLocation.rows,
   };
 }
+
+// ---------- Pinned fact-checks ----------
+// Fact-check articles from the lookup that a user keeps on a claim's page.
+
+function clip(value, max) {
+  const text = blank(value);
+  return text === null ? null : text.slice(0, max);
+}
+
+function validDate(value) {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+export async function listPinnedFactChecks(pool, userId, claimId) {
+  const { rows } = await pool.query(
+    `SELECT p.*
+       FROM pinned_fact_checks p
+       JOIN claims c ON c.id = p.claim_id
+      WHERE p.claim_id = $1 AND c.user_id = $2
+      ORDER BY p.review_date DESC NULLS LAST, p.created_at DESC`,
+    [claimId, userId]
+  );
+  return rows;
+}
+
+// Pins a fact-check to the user's claim. Pinning the same article twice
+// keeps one pin. Returns false if the claim isn't the user's.
+export async function pinFactCheck(pool, userId, claimId, fields) {
+  const claim = await getClaim(pool, userId, claimId);
+  if (!claim) return false;
+  await pool.query(
+    `INSERT INTO pinned_fact_checks
+       (claim_id, url, publisher, title, rating, review_date, reviewed_claim, claimant)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+     ON CONFLICT (claim_id, url) DO NOTHING`,
+    [
+      claimId,
+      fields.url,
+      clip(fields.publisher, 200),
+      clip(fields.title, 500),
+      clip(fields.rating, 100),
+      validDate(fields.reviewDate),
+      clip(fields.reviewedClaim, 1000),
+      clip(fields.claimant, 200),
+    ]
+  );
+  return true;
+}
+
+// Returns the pin's claim id, or null if the pin isn't the user's.
+export async function unpinFactCheck(pool, userId, pinId) {
+  const { rows } = await pool.query(
+    `DELETE FROM pinned_fact_checks p
+      USING claims c
+      WHERE p.id = $1 AND p.claim_id = c.id AND c.user_id = $2
+      RETURNING p.claim_id`,
+    [pinId, userId]
+  );
+  return rows[0]?.claim_id ?? null;
+}
