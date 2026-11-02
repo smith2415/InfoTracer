@@ -4,7 +4,7 @@ import { fromDateTimeInput, safeUrl } from "./format.js";
 import { validateClaim, validateObservation, hasErrors } from "./validation.js";
 import { buildTimeline } from "./timeline.js";
 import { FactCheckError, FACT_CHECK_MESSAGES, REASON_HINTS, ratingTone } from "./factcheck.js";
-import { searchAllSources, SAVE_PER_SOURCE, urlKey } from "./sources/index.js";
+import { searchAllSources, SAVE_PER_SOURCE, SEARCH_TIME_LIMIT_MS, urlKey } from "./sources/index.js";
 import {
   CLAIM_STATUSES,
   CLAIM_SORTS,
@@ -201,7 +201,12 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
 
   // ---------- Source search (Custom #3) ----------
 
+  // With JavaScript on, the page asks for progress updates (one JSON line per
+  // event) and shows which sources are done while the rest keep working.
+  // Without it, the form posts normally and the results show after a redirect.
   router.post("/claims/:id/source-search", async (req, res, next) => {
+    const streaming = String(req.get("Accept") || "").includes("application/x-ndjson");
+    const send = (event) => res.write(JSON.stringify(event) + "\n");
     try {
       const id = idParam(req.params.id);
       const userId = req.session.userId;
@@ -212,12 +217,36 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
       const query = asked.trim().slice(0, 200);
       const summary = { claimId: id, query, sources: [] };
 
+      if (streaming) {
+        res.set({
+          "Content-Type": "application/x-ndjson; charset=utf-8",
+          "Cache-Control": "no-store",
+          "X-Accel-Buffering": "no", // ask proxies to pass each line on right away
+        });
+        res.flushHeaders();
+        send({
+          type: "start",
+          timeLimitSeconds: Math.round(SEARCH_TIME_LIMIT_MS / 1000),
+          sources: query ? sources.map(({ name, label }) => ({ name, label })) : [],
+        });
+      }
+
       if (!query) {
         summary.error = "Enter a phrase to search for, such as the claim's hook.";
       } else {
+        const onSettle = (entry) => {
+          if (!streaming) return;
+          send({
+            type: "source",
+            name: entry.name,
+            status: entry.timedOut ? "timed out" : entry.error ? "failed" : "done",
+            seconds: entry.seconds,
+            found: entry.result ? entry.result.totalFound : null,
+          });
+        };
         // Look up the links already saved while the sources are searching.
         const [outcomes, savedUrls] = await Promise.all([
-          searchAllSources(sources, query),
+          searchAllSources(sources, query, { onSettle }),
           listObservationUrls(pool, userId, id),
         ]);
         const saved = new Set(savedUrls.map(urlKey).filter(Boolean));
@@ -225,7 +254,7 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
 
         for (const outcome of outcomes) {
           if (outcome.error) {
-            summary.sources.push({ label: outcome.label, error: outcome.error });
+            summary.sources.push({ label: outcome.label, error: outcome.error, seconds: outcome.seconds });
             continue;
           }
           const { observations, totalFound, reachedEnd } = outcome.result;
@@ -241,16 +270,29 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
             alreadySaved: observations.length - fresh.length,
             reachedEnd,
             warning: outcome.result.warning || null,
+            seconds: outcome.seconds,
           });
         }
         // Every source's new results in one database write.
+        if (streaming) send({ type: "saving" });
         await addObservations(pool, userId, id, toSaveAll);
       }
 
       req.session.sourceSearch = summary;
-      res.redirect(`/claims/${id}#source-search`);
+      const resultsUrl = `/claims/${id}#source-search`;
+      if (!streaming) return res.redirect(resultsUrl);
+      // Save the session before telling the page to reload, so the summary
+      // is there when it does.
+      req.session.save((err) => {
+        if (err) send({ type: "error", message: "The results were saved, but reload the page to see them." });
+        else send({ type: "done", redirect: resultsUrl });
+        res.end();
+      });
     } catch (err) {
-      next(err);
+      if (!res.headersSent) return next(err);
+      console.error(err);
+      send({ type: "error", message: "Something went wrong during the search. Reload the page to see what was saved." });
+      res.end();
     }
   });
 

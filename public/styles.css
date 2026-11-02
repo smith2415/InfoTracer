@@ -465,3 +465,24 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
   .filter-bar { grid-template-columns: repeat(3, 1fr); }
   .filter-search { grid-column: 1 / -1; }
 }
+
+/* Source search progress */
+.source-progress { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.progress-status { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+.progress-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.progress-item { display: flex; align-items: center; gap: 10px; font-size: 14px; flex-wrap: wrap; }
+.progress-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; border: 2px solid var(--muted); }
+.progress-item[data-state="working"] .progress-dot { border-color: var(--seed-light); border-top-color: transparent; animation: progress-spin 0.9s linear infinite; }
+.progress-item[data-state="done"] .progress-dot { background: var(--seed); border-color: var(--seed); }
+.progress-item[data-state="failed"] .progress-dot,
+.progress-item[data-state="timed out"] .progress-dot { background: #a32d2d; border-color: #f09595; }
+.progress-label { font-weight: 500; }
+.progress-state { color: var(--muted); font-size: 13px; }
+.progress-item[data-state="failed"] .progress-state,
+.progress-item[data-state="timed out"] .progress-state { color: #f09595; }
+.source-time { color: var(--muted); font-size: 13px; }
+button[disabled] { opacity: 0.6; cursor: progress; }
+@keyframes progress-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .progress-item[data-state="working"] .progress-dot { animation: none; border-top-color: var(--seed-light); }
+}

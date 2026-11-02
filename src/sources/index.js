@@ -40,20 +40,68 @@ export function createDefaultSources() {
   return [createBlueskySource(), createGdeltSource(), createXpozSource()];
 }
 
+// The most time a whole source search may take. Results from sources that
+// finish in time are kept; any source still running is reported as slow.
+export const SEARCH_TIME_LIMIT_MS = 60_000;
+
+const TIMED_OUT = Symbol("timed out");
+
 // Runs all sources at once, so a slow or failing one doesn't hold up the rest.
-// Returns one entry per source: { name, label, result } or { name, label, error }.
-export async function searchAllSources(sources, query) {
-  const settled = await Promise.allSettled(sources.map((s) => s.search(query)));
-  return settled.map((outcome, i) => {
-    const { name, label, unit = "post" } = sources[i];
-    if (outcome.status === "fulfilled") return { name, label, unit, result: outcome.value };
-    const err = outcome.reason;
-    if (!(err instanceof SourceError)) throw err;
-    console.warn(`${label}: ${err.message}`); // never includes credentials
-    let message = SOURCE_MESSAGES[name]?.[err.kind] || `${label} search didn't work. Try again later.`;
-    if (err.detail) message += ` ${label} said: "${err.detail}"`;
-    return { name, label, error: message };
+// Returns one entry per source, in the sources' order:
+//   { name, label, unit, result, seconds }        it worked
+//   { name, label, error, seconds, timedOut? }    it failed or ran out of time
+// onSettle(entry) is called as each source finishes, for progress updates.
+// Each source's time is written to the log (never with credentials).
+export async function searchAllSources(
+  sources,
+  query,
+  { timeLimitMs = SEARCH_TIME_LIMIT_MS, onSettle = () => {} } = {}
+) {
+  const started = Date.now();
+  let timer;
+  const deadline = new Promise((resolve) => {
+    timer = setTimeout(resolve, timeLimitMs, TIMED_OUT);
   });
+
+  try {
+    return await Promise.all(
+      sources.map(async (source) => {
+        const { name, label, unit = "post" } = source;
+        const run = Promise.resolve()
+          .then(() => source.search(query))
+          .then((result) => ({ result }), (err) => ({ err }));
+        const outcome = await Promise.race([run, deadline]);
+        const seconds = Math.round((Date.now() - started) / 100) / 10;
+
+        let entry;
+        if (outcome === TIMED_OUT) {
+          const limit = Math.round(timeLimitMs / 1000);
+          console.warn(`Source search: ${label} gave no answer within ${limit}s`);
+          entry = {
+            name,
+            label,
+            seconds,
+            timedOut: true,
+            error: `${label} took longer than ${limit} seconds, so its results were skipped. Try again later.`,
+          };
+        } else if (outcome.err) {
+          const err = outcome.err;
+          if (!(err instanceof SourceError)) throw err;
+          console.warn(`Source search: ${label} failed after ${seconds}s: ${err.message}`);
+          let message = SOURCE_MESSAGES[name]?.[err.kind] || `${label} search didn't work. Try again later.`;
+          if (err.detail) message += ` ${label} said: "${err.detail}"`;
+          entry = { name, label, seconds, error: message };
+        } else {
+          console.log(`Source search: ${label} finished in ${seconds}s (${outcome.result.totalFound} found)`);
+          entry = { name, label, unit, seconds, result: outcome.result };
+        }
+        onSettle(entry);
+        return entry;
+      })
+    );
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // Normalizes a link for duplicate checks: no trailing slash, any case.
