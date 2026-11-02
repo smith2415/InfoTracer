@@ -18,6 +18,8 @@ import {
   listObservations,
   getObservation,
   addObservation,
+  addObservations,
+  listObservationUrls,
   updateObservation,
   deleteObservation,
   setSeed,
@@ -163,9 +165,15 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   router.get("/claims/:id", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const claim = id && (await getClaim(pool, req.session.userId, id));
+      if (!id) return notFound(res);
+      // All three queries check the claim is the user's, so they can run at
+      // the same time instead of one after another.
+      const [claim, observations, pins] = await Promise.all([
+        getClaim(pool, req.session.userId, id),
+        listObservations(pool, req.session.userId, id),
+        listPinnedFactChecks(pool, req.session.userId, id),
+      ]);
       if (!claim) return notFound(res);
-      const observations = await listObservations(pool, req.session.userId, id);
       const timeline = buildTimeline(observations);
       const earliest = timeline.points.find((p) => p.isEarliest);
       for (const o of observations) o.is_earliest = Boolean(earliest && earliest.id === o.id);
@@ -176,7 +184,6 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
         sourceSearch = req.session.sourceSearch;
         delete req.session.sourceSearch;
       }
-      const pins = await listPinnedFactChecks(pool, req.session.userId, id);
       res.render("claim", {
         title: "Claim",
         claim,
@@ -208,10 +215,13 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
       if (!query) {
         summary.error = "Enter a phrase to search for, such as the claim's hook.";
       } else {
-        const outcomes = await searchAllSources(sources, query);
-        const saved = new Set(
-          (await listObservations(pool, userId, id)).map((o) => urlKey(o.url)).filter(Boolean)
-        );
+        // Look up the links already saved while the sources are searching.
+        const [outcomes, savedUrls] = await Promise.all([
+          searchAllSources(sources, query),
+          listObservationUrls(pool, userId, id),
+        ]);
+        const saved = new Set(savedUrls.map(urlKey).filter(Boolean));
+        const toSaveAll = [];
 
         for (const outcome of outcomes) {
           if (outcome.error) {
@@ -221,10 +231,8 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
           const { observations, totalFound, reachedEnd } = outcome.result;
           const fresh = observations.filter((o) => !saved.has(urlKey(o.url)));
           const toSave = fresh.slice(0, SAVE_PER_SOURCE); // the earliest ones
-          for (const fields of toSave) {
-            await addObservation(pool, userId, id, fields);
-            saved.add(urlKey(fields.url));
-          }
+          for (const fields of toSave) saved.add(urlKey(fields.url));
+          toSaveAll.push(...toSave);
           summary.sources.push({
             label: outcome.label,
             unit: outcome.unit,
@@ -235,6 +243,8 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
             warning: outcome.result.warning || null,
           });
         }
+        // Every source's new results in one database write.
+        await addObservations(pool, userId, id, toSaveAll);
       }
 
       req.session.sourceSearch = summary;
