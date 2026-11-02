@@ -31,6 +31,8 @@ online information was first introduced into the information environment.
 
 1. In Replit's Shell: `git fetch origin`, then `git reset --hard origin/main`.
 2. **Stop**, then **Run**. A running app keeps its old code until it restarts.
+   Run also installs any packages a merge added, so there's no separate
+   `npm install` step.
 3. **Republish.**
 
 See [ReplitLog.md](ReplitLog.md) for the full story of getting the app live.
