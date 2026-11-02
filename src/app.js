@@ -8,6 +8,7 @@ import { claimsRouter } from "./claims.js";
 import { createFactCheckSearch } from "./factcheck.js";
 import { createDefaultSources } from "./sources/index.js";
 import * as format from "./format.js";
+import { allowFramingBy, sameSiteFormsOnly } from "./embed.js";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
@@ -30,6 +31,9 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, fa
   // Replit serves the app behind a proxy that handles HTTPS.
   app.set("trust proxy", 1);
 
+  // Only Planting Weeds (and the app itself) may show the app in a frame.
+  app.use(allowFramingBy());
+
   // Browsers keep the stylesheet and icon for an hour instead of re-checking
   // them on every page.
   app.use(express.static(path.join(root, "public"), { maxAge: "1h" }));
@@ -41,7 +45,13 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, fa
   app.use(express.urlencoded({ extended: false }));
 
   const PgStore = connectPgSimple(session);
-  app.use(
+  const cookieBase = { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 7 };
+  // Over HTTPS (the live site), the cookie also works inside the frame on the
+  // Planting Weeds site (see embed.js). Over plain HTTP (local runs), browsers
+  // refuse SameSite=None cookies, so it stays SameSite=Lax there. Each kind
+  // needs its own store object (express-session keeps cookie settings on the
+  // store); both use the same sessions table.
+  const makeSession = (cookie, { prune }) =>
     session({
       name: "infotracer.sid",
       // disableTouch: don't write to the sessions table on every page view
@@ -54,19 +64,16 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, fa
         pool,
         createTableIfMissing: true,
         disableTouch: true,
-        pruneSessionInterval: 60 * 60 * 24,
+        pruneSessionInterval: prune ? 60 * 60 * 24 : false,
       }),
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
-      cookie: {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: isProduction,
-        maxAge: 1000 * 60 * 60 * 24 * 7,
-      },
-    })
-  );
+      cookie: { ...cookieBase, ...cookie },
+    });
+  const httpsSession = makeSession({ secure: true, sameSite: "none", partitioned: true }, { prune: true });
+  const httpSession = makeSession({ secure: false, sameSite: "lax" }, { prune: false });
+  app.use((req, res, next) => (req.secure ? httpsSession : httpSession)(req, res, next));
 
   // Display helpers (dash, formatDateTime, ...) for every page.
   Object.assign(app.locals, format);
@@ -78,6 +85,9 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, fa
       : null;
     next();
   });
+
+  // Only the app's own pages may submit its forms (see embed.js).
+  app.use(sameSiteFormsOnly);
 
   app.get("/", (req, res) => {
     res.redirect(req.session.userId ? "/claims" : "/login");
