@@ -1,9 +1,11 @@
 // A failure from one search source. The message never includes credentials.
 //   kind: not_configured | rejected | rate_limited | unavailable
+// detail: an optional short explanation from the source itself.
 export class SourceError extends Error {
-  constructor(kind) {
-    super(`Source search failed: ${kind}`);
+  constructor(kind, detail = null) {
+    super(`Source search failed: ${kind}${detail ? ` (${detail})` : ""}`);
     this.kind = kind;
+    this.detail = detail;
   }
 }
 

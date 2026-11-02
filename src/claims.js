@@ -227,6 +227,7 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
           }
           summary.sources.push({
             label: outcome.label,
+            unit: outcome.unit,
             found: totalFound,
             saved: toSave.length,
             alreadySaved: observations.length - fresh.length,
