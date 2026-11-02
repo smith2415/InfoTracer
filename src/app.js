@@ -23,10 +23,16 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, fa
   const app = express();
   app.set("view engine", "ejs");
   app.set("views", path.join(root, "views"));
+  // Compile each page template once and reuse it. Express only does this
+  // when NODE_ENV is "production", which Replit doesn't set, so without this
+  // every page was re-read from disk and recompiled on every request.
+  app.set("view cache", true);
   // Replit serves the app behind a proxy that handles HTTPS.
   app.set("trust proxy", 1);
 
-  app.use(express.static(path.join(root, "public")));
+  // Browsers keep the stylesheet and icon for an hour instead of re-checking
+  // them on every page.
+  app.use(express.static(path.join(root, "public"), { maxAge: "1h" }));
   // Chart.js for the dashboard, served from the installed package.
   app.use(
     "/vendor/chart.js",
@@ -38,7 +44,10 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, fa
   app.use(
     session({
       name: "infotracer.sid",
-      store: new PgStore({ pool, createTableIfMissing: true }),
+      // disableTouch: don't write to the sessions table on every page view
+      // just to push the expiry back. A login lasts 7 days from signing in,
+      // which is also when the cookie expires (it isn't renewed either).
+      store: new PgStore({ pool, createTableIfMissing: true, disableTouch: true }),
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,

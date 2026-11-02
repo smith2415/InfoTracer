@@ -196,6 +196,47 @@ export async function addObservation(pool, userId, claimId, fields) {
   return rows[0] || null;
 }
 
+// Saves many observations at once (from a source search) in one database
+// write. Returns how many were saved: 0 if the claim isn't the user's.
+export async function addObservations(pool, userId, claimId, list) {
+  if (list.length === 0) return 0;
+  const column = (key) => list.map((fields) => blank(fields[key]));
+  const { rowCount } = await pool.query(
+    `INSERT INTO observations
+       (claim_id, observed_at, location, poster, post_text, url, notes, found_by)
+     SELECT c.id, x.observed_at, x.location, x.poster, x.post_text, x.url, x.notes,
+            COALESCE(x.found_by, 'manual')
+       FROM claims c,
+            unnest($3::timestamptz[], $4::text[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[])
+              AS x(observed_at, location, poster, post_text, url, notes, found_by)
+      WHERE c.id = $1 AND c.user_id = $2`,
+    [
+      claimId,
+      userId,
+      column("observedAt"),
+      column("location"),
+      column("poster"),
+      column("postText"),
+      column("url"),
+      column("notes"),
+      column("foundBy"),
+    ]
+  );
+  return rowCount;
+}
+
+// Just the links already saved on a claim, for spotting duplicates.
+export async function listObservationUrls(pool, userId, claimId) {
+  const { rows } = await pool.query(
+    `SELECT o.url
+       FROM observations o
+       JOIN claims c ON c.id = o.claim_id
+      WHERE o.claim_id = $1 AND c.user_id = $2 AND o.url IS NOT NULL`,
+    [claimId, userId]
+  );
+  return rows.map((r) => r.url);
+}
+
 export async function updateObservation(pool, userId, observationId, fields) {
   const { rows } = await pool.query(
     `UPDATE observations o
