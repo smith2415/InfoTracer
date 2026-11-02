@@ -274,6 +274,11 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .evidence-card.is-seed.is-weed { border-color: var(--seed); box-shadow: inset 3px 0 0 #a32d2d; }
 .evidence-claim { display: block; margin-bottom: 8px; font-size: 13px; color: var(--text); text-decoration: none; font-weight: 500; overflow-wrap: anywhere; }
 .evidence-claim:hover { color: var(--seed-light); }
+/* Weeds page, grouped by claim */
+.weed-group { margin-bottom: 28px; }
+.weed-group-heading { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; font-size: 17px; font-weight: 500; }
+.weed-group-heading a { color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
+.weed-group-heading a:hover { color: var(--seed-light); }
 .evidence-card:target { box-shadow: 0 0 0 2px var(--seed-light); }
 .evidence-top { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; }
 .evidence-flags { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; }
@@ -465,9 +470,3 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
   .filter-bar { grid-template-columns: repeat(3, 1fr); }
   .filter-search { grid-column: 1 / -1; }
 }
-
-/* Weeds page, grouped by claim */
-.weed-group { margin-bottom: 28px; }
-.weed-group-heading { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; font-size: 17px; font-weight: 500; }
-.weed-group-heading a { color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
-.weed-group-heading a:hover { color: var(--seed-light); }
