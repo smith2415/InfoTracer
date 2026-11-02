@@ -9,10 +9,35 @@ const ENDPOINT = "https://factchecktools.googleapis.com/v1alpha1/claims:search";
 
 export class FactCheckError extends Error {
   // kind: not_configured | rejected | rate_limited | unavailable
-  constructor(kind) {
-    super(`Fact-check lookup failed: ${kind}`);
+  // reason: Google's short error code when it gives one, e.g. SERVICE_DISABLED
+  constructor(kind, reason = null) {
+    super(`Fact-check lookup failed: ${kind}${reason ? ` (${reason})` : ""}`);
     this.kind = kind;
+    this.reason = reason;
   }
+}
+
+// What each of Google's common refusal reasons means, in plain words.
+export const REASON_HINTS = {
+  SERVICE_DISABLED: "The Fact Check Tools API isn't enabled for this key's Google Cloud project.",
+  API_KEY_INVALID: "The API key isn't valid. Check the secret's value.",
+  API_KEY_SERVICE_BLOCKED: "The key's API restrictions don't include the Fact Check Tools API.",
+  API_KEY_HTTP_REFERRER_BLOCKED: "The key only allows websites. Set its application restriction to None.",
+  API_KEY_IP_ADDRESS_BLOCKED: "The key only allows certain IP addresses. Set its application restriction to None.",
+  API_KEY_ANDROID_APP_BLOCKED: "The key only allows Android apps. Set its application restriction to None.",
+  API_KEY_IOS_APP_BLOCKED: "The key only allows iOS apps. Set its application restriction to None.",
+};
+
+// Pulls Google's short reason code out of an error response, keeping only
+// letters, digits and underscores so nothing else can reach the page.
+export function googleReason(body) {
+  const err = body?.error || {};
+  const fromDetails = Array.isArray(err.details)
+    ? err.details.map((d) => d?.reason).find(Boolean)
+    : null;
+  const raw = fromDetails || err.status || null;
+  const clean = raw ? String(raw).replace(/[^A-Z0-9_]/gi, "").slice(0, 60) : "";
+  return clean || null;
 }
 
 export const FACT_CHECK_MESSAGES = {
@@ -82,11 +107,14 @@ export function createFactCheckSearch({
       throw new FactCheckError("unavailable");
     }
 
-    if (res.status === 429) throw new FactCheckError("rate_limited");
-    if (res.status === 400 || res.status === 401 || res.status === 403) {
-      throw new FactCheckError("rejected");
+    if (!res.ok) {
+      const reason = googleReason(await res.json().catch(() => null));
+      if (res.status === 429) throw new FactCheckError("rate_limited", reason);
+      if (res.status === 400 || res.status === 401 || res.status === 403) {
+        throw new FactCheckError("rejected", reason);
+      }
+      throw new FactCheckError("unavailable", reason);
     }
-    if (!res.ok) throw new FactCheckError("unavailable");
 
     let data;
     try {
