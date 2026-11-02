@@ -47,7 +47,15 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, fa
       // disableTouch: don't write to the sessions table on every page view
       // just to push the expiry back. A login lasts 7 days from signing in,
       // which is also when the cookie expires (it isn't renewed either).
-      store: new PgStore({ pool, createTableIfMissing: true, disableTouch: true }),
+      // pruneSessionInterval: clear out expired logins once a day rather than
+      // every 15 minutes, so an idle app isn't waking the database. Expired
+      // logins are never accepted in the meantime.
+      store: new PgStore({
+        pool,
+        createTableIfMissing: true,
+        disableTouch: true,
+        pruneSessionInterval: 60 * 60 * 24,
+      }),
       secret: sessionSecret,
       resave: false,
       saveUninitialized: false,
