@@ -214,6 +214,7 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .flag { background: #26282d; color: var(--muted); }
 .flag-seed { background: #1d2a12; color: var(--seed-light); }
 .flag-weed { background: #2a1515; color: #f09595; }
+.flag-verify { background: #412402; color: var(--status); }
 
 .filter-bar {
   display: grid;
