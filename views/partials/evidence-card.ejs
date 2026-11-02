@@ -6,6 +6,7 @@
   <div class="evidence-top">
     <span><%= formatDateTime(o.observed_at) %> · <%= o.location %></span>
     <span class="evidence-flags">
+      <% if (o.is_earliest) { %><span class="flag flag-earliest">earliest found</span><% } %>
       <% if (o.is_seed) { %><span class="flag flag-seed">seed</span><% } %>
       <% if (o.is_weed) { %><span class="flag flag-weed">weed</span><% } %>
       <span class="flag"><%= o.found_by %></span>

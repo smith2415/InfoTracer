@@ -23,6 +23,10 @@
   <% } %>
 </section>
 
+<% if (observations.length > 0) { %>
+  <%- include("partials/timeline", { timeline }) %>
+<% } %>
+
 <section>
   <div class="page-head">
     <h2>Observations <span class="count"><%= observations.length %></span></h2>

@@ -2,6 +2,7 @@ import express from "express";
 import { requireLogin } from "./auth.js";
 import { fromDateTimeInput } from "./format.js";
 import { validateClaim, validateObservation, hasErrors } from "./validation.js";
+import { buildTimeline } from "./timeline.js";
 import {
   CLAIM_STATUSES,
   CLAIM_SORTS,
@@ -160,7 +161,10 @@ export function claimsRouter(pool) {
       const claim = id && (await getClaim(pool, req.session.userId, id));
       if (!claim) return notFound(res);
       const observations = await listObservations(pool, req.session.userId, id);
-      res.render("claim", { title: "Claim", claim, observations });
+      const timeline = buildTimeline(observations);
+      const earliest = timeline.points.find((p) => p.isEarliest);
+      for (const o of observations) o.is_earliest = Boolean(earliest && earliest.id === o.id);
+      res.render("claim", { title: "Claim", claim, observations, timeline });
     } catch (err) {
       next(err);
     }

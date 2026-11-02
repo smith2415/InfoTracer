@@ -341,6 +341,38 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
   white-space: nowrap;
 }
 
+.timeline-card {
+  margin-bottom: 28px;
+  padding: 18px 20px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.timeline-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.timeline-key { display: flex; gap: 14px; font-size: 12px; color: var(--muted); }
+.key-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
+.key-seed { background: var(--seed-light); }
+.key-weed { background: var(--weed-light); }
+.key-obs { background: #888780; }
+.timeline-summary { margin: 8px 0 6px; font-size: 14px; color: var(--muted); }
+.timeline-summary strong { color: var(--text); font-weight: 500; }
+.timeline-summary .muted-inline { display: block; margin-top: 2px; }
+.timeline-empty { margin: 10px 0 6px; }
+.timeline-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.timeline-svg { display: block; width: 100%; min-width: 620px; height: auto; overflow: visible; }
+.timeline-svg .vine { stroke: var(--seed); stroke-width: 3; stroke-linecap: round; }
+.timeline-svg .tick { stroke: var(--border); stroke-width: 1.5; }
+.timeline-svg .tick-label { fill: var(--muted); font-size: 13px; font-family: var(--sans); }
+.timeline-svg .stem { stroke: #3b3e44; stroke-width: 1.5; }
+.marker circle { stroke-width: 2; }
+.marker-observation circle { fill: #5f5e5a; stroke: #888780; }
+.marker-weed circle { fill: #a32d2d; stroke: #e24b4a; }
+.marker-seed circle { fill: #639922; stroke: #c0dd97; }
+.marker-seed .weed-ring { fill: none; stroke: #e24b4a; stroke-width: 2.5; }
+.marker:hover circle, .marker:focus circle { stroke: var(--text); }
+.timeline-undated { margin: 10px 0 4px; font-size: 13px; color: var(--muted); }
+.timeline-undated a { color: var(--text); }
+.flag-earliest { background: #26282d; color: var(--status); }
+
 .site-footer {
   padding: 16px 24px;
   border-top: 1px solid var(--border);
