@@ -303,6 +303,21 @@ export async function setSeed(pool, userId, observationId) {
   }
 }
 
+// Marks or unmarks an observation as important: worth highlighting without
+// being the seed or a weed. Returns the claim id, or null if the observation
+// isn't the user's.
+export async function setImportant(pool, userId, observationId, important) {
+  const { rows } = await pool.query(
+    `UPDATE observations o
+        SET is_important = $3
+       FROM claims c
+      WHERE o.id = $1 AND o.claim_id = c.id AND c.user_id = $2
+      RETURNING o.claim_id`,
+    [observationId, userId, Boolean(important)]
+  );
+  return rows[0]?.claim_id ?? null;
+}
+
 // ---------- Weeds ----------
 // A weed is a user's assessment that an observation is intentionally
 // spreading disinformation. Each row in the weeds table means
