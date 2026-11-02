@@ -25,7 +25,9 @@ online information was first introduced into the information environment.
    To add TikTok (5 credits) or Instagram (12 credits), add
    `XPOZ_PLATFORMS`, e.g. `twitter,reddit,tiktok`. Every Xpoz result is
    flagged "verify."
-7. Press **Run**. The app creates its tables on first start.
+7. Optional: `FRAME_ANCESTORS` lists the sites allowed to show the app in a
+   frame. It defaults to the Planting Weeds site (`https://smith2415.github.io`).
+8. Press **Run**. The app creates its tables on first start.
 
 ### Updating the live app after a merge
 
@@ -53,6 +55,12 @@ Then open http://localhost:3000.
 ```bash
 TEST_DATABASE_URL=postgresql://user:password@localhost:5432/infotracer_test npm test
 ```
+
+## Embedded on Planting Weeds
+
+The app also appears as a page on the Planting Weeds site. Only that site may
+frame it, the login cookie is set to work inside the frame over HTTPS, and
+forms submitted from any other website are refused. See `src/embed.js`.
 
 ## Guides
 
