@@ -4,6 +4,7 @@
 import { SourceError } from "./source-error.js";
 import { createBlueskySource } from "./bluesky.js";
 import { createGdeltSource } from "./gdelt.js";
+import { createXpozSource } from "./xpoz.js";
 
 export { SourceError };
 
@@ -25,10 +26,18 @@ export const SOURCE_MESSAGES = {
     rate_limited: "GDELT is limiting searches right now. Wait a minute and try again.",
     unavailable: "GDELT didn't respond. Its servers can be slow; try again in a moment.",
   },
+  xpoz: {
+    not_configured: "Xpoz search isn't set up yet. Add an XPOZ_API_KEY secret to turn it on.",
+    rejected: "Xpoz didn't accept the API key. Check the XPOZ_API_KEY secret.",
+    out_of_credits: "Xpoz's credits are used up for now. Bluesky and GDELT still work.",
+    rate_limited: "Xpoz is limiting searches right now. Try again in a few minutes.",
+    bad_query: "Xpoz couldn't run that search. Try a different phrase.",
+    unavailable: "Couldn't reach Xpoz. Try again in a moment.",
+  },
 };
 
 export function createDefaultSources() {
-  return [createBlueskySource(), createGdeltSource()];
+  return [createBlueskySource(), createGdeltSource(), createXpozSource()];
 }
 
 // Runs all sources at once, so a slow or failing one doesn't hold up the rest.

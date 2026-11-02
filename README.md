@@ -20,7 +20,12 @@ online information was first introduced into the information environment.
    **Settings → Privacy and security → App passwords**; never use your main
    password. The source search also checks news coverage through GDELT,
    which needs no key.
-6. Press **Run**. The app creates its tables on first start.
+6. For Xpoz in the source search, add `XPOZ_API_KEY` (free key from
+   xpoz.ai). It searches X and Reddit by default, about 4 credits per search.
+   To add TikTok (5 credits) or Instagram (12 credits), add
+   `XPOZ_PLATFORMS`, e.g. `twitter,reddit,tiktok`. Every Xpoz result is
+   flagged "verify."
+7. Press **Run**. The app creates its tables on first start.
 
 ### Updating the live app after a merge
 

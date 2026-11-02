@@ -232,6 +232,7 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
             saved: toSave.length,
             alreadySaved: observations.length - fresh.length,
             reachedEnd,
+            warning: outcome.result.warning || null,
           });
         }
       }
