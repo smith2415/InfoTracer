@@ -148,6 +148,18 @@ describe("fact-check lookup page", () => {
     expect(res.text).toContain('href="https://factcheck.example/yachts"');
   });
 
+  it("shows search tips, opened when nothing matches", async () => {
+    const found = await agentA.get(`/claims/${claimId}/fact-checks`);
+    expect(found.text).toContain("<summary>Search tips</summary>");
+    expect(found.text).not.toMatch(/<details class="search-tips" open>/);
+
+    const emptyApp = createApp(pool, { sessionSecret: "test-secret", factCheckSearch: async () => [] });
+    const agent = request.agent(emptyApp);
+    await agent.post("/login").type("form").send({ email: emails[0], password: "fc-pass-a" });
+    const none = await agent.get(`/claims/${claimId}/fact-checks`);
+    expect(none.text).toMatch(/<details class="search-tips" open>/);
+  });
+
   it("searches a custom phrase", async () => {
     await agentA.get(`/claims/${claimId}/fact-checks`).query({ q: "  Zelensky yachts  " });
     expect(queries.at(-1)).toBe("Zelensky yachts");

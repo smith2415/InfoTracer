@@ -42,6 +42,11 @@ Then open http://localhost:3000.
 TEST_DATABASE_URL=postgresql://user:password@localhost:5432/infotracer_test npm test
 ```
 
+## Guides
+
+- [How to use the fact-check lookup](docs/fact-check-guide.md), with search tips
+  and a worked example.
+
 ## Built with
 
 Node.js, Express, EJS, PostgreSQL, bcryptjs and express-session, built with

@@ -33,3 +33,19 @@ hides the reason again.
 
 A friendly error message still needs the real cause somewhere. "It didn't
 work" isn't enough to fix it.
+
+## Follow-up: a tutorial
+
+> "Can you edit PR #37 to include a tutorial on how to use the fact check
+> tool, including tips on how to search with an example?"
+
+Claude added `docs/fact-check-guide.md`: step-by-step use, search tips, a
+worked example based on the yacht case study from my article (searching the
+full sentence vs. the hook vs. a name plus one key word), how to use what you
+find in InfoTracer, and a table of Google's error reasons. The fact-check page
+also gained a short "Search tips" section that opens automatically when a
+search finds nothing, with a link to the full guide. One new test checks the
+tips appear.
+
+The example describes the search approach rather than quoting specific
+results, since the live database can't be checked from Claude's workspace.
