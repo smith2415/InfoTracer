@@ -1,0 +1,33 @@
+<section class="tool-card" id="source-search" aria-labelledby="source-search-heading">
+  <div class="tool-card-row">
+    <div>
+      <h2 id="source-search-heading">Source search</h2>
+      <p class="muted">Search Bluesky and save the <%= savePerSource %> earliest matching posts as observations. Fill in anything shown as "-".</p>
+    </div>
+    <form method="post" action="/claims/<%= claim.id %>/source-search" class="factcheck-form">
+      <label for="ss-q" class="visually-hidden">Search sources for</label>
+      <input id="ss-q" name="q" value="<%= sourceSearch ? sourceSearch.query : (claim.hook || claim.claim_text) %>" maxlength="200">
+      <button type="submit" class="button button-seed">Search sources</button>
+    </form>
+  </div>
+
+  <% if (sourceSearch) { %>
+    <div class="source-results" role="status">
+      <% if (sourceSearch.error) { %>
+        <p class="form-error"><%= sourceSearch.error %></p>
+      <% } %>
+      <% sourceSearch.sources.forEach((s) => { %>
+        <% if (s.error) { %>
+          <p class="source-line source-error"><strong><%= s.label %>:</strong> <%= s.error %></p>
+        <% } else if (s.found === 0) { %>
+          <p class="source-line"><strong><%= s.label %>:</strong> no posts found for "<%= sourceSearch.query %>". Try the hook, or a shorter phrase.</p>
+        <% } else { %>
+          <p class="source-line">
+            <strong><%= s.label %>:</strong> found <%= s.found %> post<%= s.found === 1 ? "" : "s" %>; <% if (s.saved > 0) { %>saved the <%= s.saved === 1 ? "earliest" : s.saved + " earliest" %> as observation<%= s.saved === 1 ? "" : "s" %><% } else { %>nothing new to save<% } %><% if (s.alreadySaved > 0) { %> (<%= s.alreadySaved %> already saved)<% } %>.
+            <% if (!s.reachedEnd) { %><span class="source-warning">Only the most recent <%= s.found %> matches were checked, so older posts may exist. A more specific phrase can reach further back.</span><% } %>
+          </p>
+        <% } %>
+      <% }) %>
+    </div>
+  <% } %>
+</section>

@@ -417,6 +417,19 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .search-tips li { margin-bottom: 4px; }
 .search-tips strong { color: var(--text); font-weight: 500; }
 .search-tips-more { margin: 6px 0 0; }
+.tool-card {
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.tool-card-row { display: flex; justify-content: space-between; align-items: center; gap: 16px 24px; flex-wrap: wrap; }
+.tool-card .muted { margin: 2px 0 0; font-size: 14px; max-width: 460px; }
+.source-results { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.source-line { margin: 0 0 6px; font-size: 14px; }
+.source-line strong { font-weight: 500; }
+.source-error { color: #f09595; }
+.source-warning { display: block; margin-top: 2px; color: var(--status); font-size: 13px; }
 
 .site-footer {
   padding: 16px 24px;

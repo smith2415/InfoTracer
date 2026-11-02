@@ -6,12 +6,14 @@ import { fileURLToPath } from "node:url";
 import { authRouter } from "./auth.js";
 import { claimsRouter } from "./claims.js";
 import { createFactCheckSearch } from "./factcheck.js";
+import { createDefaultSources } from "./sources/index.js";
 import * as format from "./format.js";
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 
-// options.factCheckSearch lets tests replace the real Google lookup.
-export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, factCheckSearch } = {}) {
+// options.factCheckSearch and options.sources let tests replace the real
+// outside services (Google, Bluesky) with stand-ins.
+export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, factCheckSearch, sources } = {}) {
   const isProduction = process.env.NODE_ENV === "production";
   if (!sessionSecret) {
     if (isProduction) throw new Error("SESSION_SECRET must be set in production.");
@@ -66,7 +68,12 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, fa
 
   app.use(authRouter(pool));
 
-  app.use(claimsRouter(pool, { factCheckSearch: factCheckSearch || createFactCheckSearch() }));
+  app.use(
+    claimsRouter(pool, {
+      factCheckSearch: factCheckSearch || createFactCheckSearch(),
+      sources: sources || createDefaultSources(),
+    })
+  );
 
   app.use((req, res) => {
     res.status(404).render("message", {
