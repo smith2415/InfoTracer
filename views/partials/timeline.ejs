@@ -10,6 +10,7 @@
     <div class="timeline-key" aria-hidden="true">
       <span><i class="key-dot key-seed"></i>seed</span>
       <span><i class="key-dot key-weed"></i>weed</span>
+      <span><i class="key-dot key-important"></i>important</span>
       <span><i class="key-dot key-obs"></i>observation</span>
     </div>
   </div>
@@ -33,14 +34,12 @@
       <% }) %>
       <% t.points.forEach((p) => { const y = rowY(p.row); %>
         <a href="#observation-<%= p.id %>" class="marker marker-<%= p.kind %>">
-          <title><%= p.label %><%= p.kind === "seed" ? " (seed)" : "" %><%= p.isWeed ? " (weed)" : "" %><%= p.isEarliest ? " (earliest found)" : "" %></title>
+          <title><%= p.label %><%= p.kind === "seed" ? " (seed)" : "" %><%= p.isWeed ? " (weed)" : "" %><%= p.isImportant ? " (important)" : "" %><%= p.isEarliest ? " (earliest found)" : "" %></title>
           <line class="stem" x1="<%= p.x %>" x2="<%= p.x %>" y1="<%= y %>" y2="<%= axisY %>" />
-          <% if (p.kind === "seed") { %>
-            <circle cx="<%= p.x %>" cy="<%= y %>" r="9" />
-            <% if (p.isWeed) { %><circle class="weed-ring" cx="<%= p.x %>" cy="<%= y %>" r="13" /><% } %>
-          <% } else { %>
-            <circle cx="<%= p.x %>" cy="<%= y %>" r="7" />
-          <% } %>
+          <% const r = p.kind === "seed" ? 9 : 7; const seedWeed = p.kind === "seed" && p.isWeed; %>
+          <circle cx="<%= p.x %>" cy="<%= y %>" r="<%= r %>" />
+          <% if (seedWeed) { %><circle class="weed-ring" cx="<%= p.x %>" cy="<%= y %>" r="13" /><% } %>
+          <% if (p.isImportant) { %><circle class="important-ring" cx="<%= p.x %>" cy="<%= y %>" r="<%= seedWeed ? 17 : r + 4 %>" /><% } %>
         </a>
       <% }) %>
     </svg>

@@ -1,4 +1,4 @@
-<% const classes = ["evidence-card", o.is_seed ? "is-seed" : "", o.is_weed ? "is-weed" : ""].join(" ").trim(); %>
+<% const classes = ["evidence-card", o.is_seed ? "is-seed" : "", o.is_weed ? "is-weed" : "", o.is_important ? "is-important" : ""].join(" ").trim(); %>
 <li class="<%= classes %>" id="observation-<%= o.id %>">
   <% if (context === "weeds" && !locals.grouped) { %>
     <a class="evidence-claim" href="/claims/<%= o.claim_id %>#observation-<%= o.id %>">"<%= o.claim_text %>"</a>
@@ -9,6 +9,7 @@
       <% if (o.is_earliest) { %><span class="flag flag-earliest">earliest found</span><% } %>
       <% if (o.is_seed) { %><span class="flag flag-seed">seed</span><% } %>
       <% if (o.is_weed) { %><span class="flag flag-weed">weed</span><% } %>
+      <% if (o.is_important) { %><span class="flag flag-important">important</span><% } %>
       <span class="flag"><%= o.found_by %></span>
       <% if (o.found_by === "xpoz") { %><span class="flag flag-verify" title="Xpoz doesn't disclose how it collects its data. Check the original post.">verify</span><% } %>
     </span>
@@ -30,6 +31,10 @@
     <form method="post" action="/observations/<%= o.id %>/<%= o.is_weed ? 'unweed' : 'weed' %>" class="inline-form">
       <% if (context === "weeds") { %><input type="hidden" name="return_to" value="weeds"><% } %>
       <button type="submit" class="link-button weed-toggle"><%= o.is_weed ? "Remove weed" : "Mark as weed" %></button>
+    </form>
+    <form method="post" action="/observations/<%= o.id %>/<%= o.is_important ? 'unimportant' : 'important' %>" class="inline-form">
+      <% if (context === "weeds") { %><input type="hidden" name="return_to" value="weeds"><% } %>
+      <button type="submit" class="link-button important-toggle"><%= o.is_important ? "Remove important" : "Mark important" %></button>
     </form>
     <% if (context === "claim") { %>
       <a href="/observations/<%= o.id %>/edit">Edit</a>

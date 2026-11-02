@@ -51,6 +51,8 @@ export async function migrate(pool) {
       created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
     );
     CREATE INDEX IF NOT EXISTS observations_claim_id_idx ON observations (claim_id);
+    -- Added after the plan: highlights a post without it being the seed or a weed.
+    ALTER TABLE observations ADD COLUMN IF NOT EXISTS is_important BOOLEAN NOT NULL DEFAULT false;
     -- At most one seed (origin) per claim.
     CREATE UNIQUE INDEX IF NOT EXISTS observations_one_seed_per_claim
       ON observations (claim_id) WHERE is_seed;

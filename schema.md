@@ -43,6 +43,7 @@ One row per sighting of a claim.
 | url | text | Link to the post |
 | notes | text | Up to 2,000 characters |
 | is_seed | true/false | True for the claim's origin; at most one per claim |
+| is_important | true/false | Highlights an observation that matters without being the seed or a weed (a big amplifier, a turning point). Added after the plan |
 | found_by | text | bluesky, gdelt, xpoz or manual; starts as manual |
 | created_at | date and time | Set automatically |
 

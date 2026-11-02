@@ -23,6 +23,7 @@ import {
   updateObservation,
   deleteObservation,
   setSeed,
+  setImportant,
   addWeed,
   removeWeed,
   listWeeds,
@@ -579,6 +580,20 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
       next(err);
     }
   });
+
+  // Important: highlight an observation without it being the seed or a weed.
+  for (const [path, important] of [["important", true], ["unimportant", false]]) {
+    router.post(`/observations/:id/${path}`, async (req, res, next) => {
+      try {
+        const id = idParam(req.params.id);
+        const claimId = id && (await setImportant(pool, req.session.userId, id, important));
+        if (!claimId) return notFound(res);
+        res.redirect(afterWeed(req.body, { id, claim_id: claimId }));
+      } catch (err) {
+        next(err);
+      }
+    });
+  }
 
   // ---------- Dashboard ----------
 

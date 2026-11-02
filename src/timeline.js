@@ -76,6 +76,7 @@ export function buildTimeline(observations) {
       row,
       kind,
       isWeed: Boolean(o.is_weed),
+      isImportant: Boolean(o.is_important),
       isEarliest: index === 0,
       label: `${shortDate(new Date(o.time))} · ${o.location}${o.poster ? " · " + o.poster : ""}`,
     };

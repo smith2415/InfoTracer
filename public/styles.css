@@ -215,6 +215,7 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .flag-seed { background: #1d2a12; color: var(--seed-light); }
 .flag-weed { background: #2a1515; color: #f09595; }
 .flag-verify { background: #412402; color: var(--status); }
+.flag-important { background: #0c2236; color: #85b7eb; }
 
 .filter-bar {
   display: grid;
@@ -272,6 +273,9 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .evidence-card.is-seed { border-color: var(--seed); }
 .evidence-card.is-weed { border-color: #791f1f; }
 .evidence-card.is-seed.is-weed { border-color: var(--seed); box-shadow: inset 3px 0 0 #a32d2d; }
+.evidence-card.is-important:not(.is-seed):not(.is-weed) { border-color: #185fa5; }
+.evidence-card.is-important.is-seed,
+.evidence-card.is-important.is-weed { box-shadow: inset 0 3px 0 #378add; }
 .evidence-claim { display: block; margin-bottom: 8px; font-size: 13px; color: var(--text); text-decoration: none; font-weight: 500; overflow-wrap: anywhere; }
 .evidence-claim:hover { color: var(--seed-light); }
 /* Weeds page, grouped by claim */
@@ -280,8 +284,11 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .weed-group-heading a { color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
 .weed-group-heading a:hover { color: var(--seed-light); }
 .evidence-card:target { box-shadow: 0 0 0 2px var(--seed-light); }
-.evidence-top { display: flex; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 12px; }
-.evidence-flags { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; }
+/* The date keeps a readable width; when the flags don't fit beside it, they
+   wrap onto their own line instead of squeezing it. */
+.evidence-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 8px; color: var(--muted); font-size: 12px; }
+.evidence-top > span:first-child { flex: 1 1 9rem; min-width: 9rem; }
+.evidence-flags { display: flex; flex-wrap: wrap; gap: 6px; align-items: flex-start; }
 .evidence-poster { margin: 8px 0 4px; font-weight: 500; overflow-wrap: anywhere; }
 .evidence-text { margin: 0 0 10px; color: #b4b2a9; font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .evidence-details { margin: 0 0 12px; font-size: 13px; display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
@@ -297,6 +304,8 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .evidence-actions .weed-link:hover { color: #f09595; }
 .weed-toggle { color: #e24b4a; font-size: 13px; }
 .weed-toggle:hover { color: #f7c1c1; }
+.important-toggle { color: #85b7eb; font-size: 13px; }
+.important-toggle:hover { color: #b5d4f4; }
 
 .form-card {
   max-width: 620px;
@@ -358,6 +367,7 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .key-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: -1px; }
 .key-seed { background: var(--seed-light); }
 .key-weed { background: var(--weed-light); }
+.key-important { background: transparent; border: 2px solid #378add; width: 11px; height: 11px; vertical-align: -2px; }
 .key-obs { background: #888780; }
 .timeline-summary { margin: 8px 0 6px; font-size: 14px; color: var(--muted); }
 .timeline-summary strong { color: var(--text); font-weight: 500; }
@@ -374,6 +384,7 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .marker-weed circle { fill: #a32d2d; stroke: #e24b4a; }
 .marker-seed circle { fill: #639922; stroke: #c0dd97; }
 .marker-seed .weed-ring { fill: none; stroke: #e24b4a; stroke-width: 2.5; }
+.marker .important-ring { fill: none; stroke: #378add; stroke-width: 2.5; }
 .marker:hover circle, .marker:focus circle { stroke: var(--text); }
 .timeline-undated { margin: 10px 0 4px; font-size: 13px; color: var(--muted); }
 .timeline-undated a { color: var(--text); }
