@@ -46,18 +46,42 @@
             <% if (r.claimDate) { %><%= formatDate(r.claimDate) %><% } %>
           </p>
           <ul class="review-list">
-            <% r.reviews.forEach((rev) => { const link = safeUrl(rev.url); %>
+            <% r.reviews.forEach((rev) => { const link = safeUrl(rev.url); const pinId = link ? pinned.get(urlKey(link)) : null; %>
               <li class="review">
                 <% if (rev.rating) { %><span class="rating rating-<%= ratingTone(rev.rating) %>"><%= rev.rating %></span><% } %>
-                <span class="review-source">
-                  <strong><%= rev.publisher %></strong>
-                  <% if (rev.reviewDate) { %><span class="muted-inline"> · <%= formatDate(rev.reviewDate) %></span><% } %>
-                  <% if (rev.language && rev.language !== "en") { %><span class="tag"><%= rev.language %></span><% } %>
-                </span>
+                <div class="review-body">
+                  <span class="review-source">
+                    <strong><%= rev.publisher %></strong>
+                    <% if (rev.reviewDate) { %><span class="muted-inline"> · <%= formatDate(rev.reviewDate) %></span><% } %>
+                    <% if (rev.language && rev.language !== "en") { %><span class="tag"><%= rev.language %></span><% } %>
+                  </span>
+                  <% if (link) { %>
+                    <a class="review-title" href="<%= link %>" target="_blank" rel="noopener noreferrer"><%= rev.title || "Read the fact-check" %></a>
+                  <% } else if (rev.title) { %>
+                    <span class="review-title"><%= rev.title %></span>
+                  <% } %>
+                </div>
                 <% if (link) { %>
-                  <a class="review-title" href="<%= link %>" target="_blank" rel="noopener noreferrer"><%= rev.title || "Read the fact-check" %></a>
-                <% } else if (rev.title) { %>
-                  <span class="review-title"><%= rev.title %></span>
+                  <% if (pinId) { %>
+                    <form method="post" action="/fact-check-pins/<%= pinId %>/unpin" class="inline-form review-pin">
+                      <input type="hidden" name="return_to" value="results">
+                      <input type="hidden" name="q" value="<%= query %>">
+                      <button type="submit" class="button button-small is-pinned" aria-label="Unpin this fact-check from the claim">Pinned ✓</button>
+                    </form>
+                  <% } else { %>
+                    <form method="post" action="/claims/<%= claim.id %>/fact-checks/pin" class="inline-form review-pin">
+                      <input type="hidden" name="return_to" value="results">
+                      <input type="hidden" name="q" value="<%= query %>">
+                      <input type="hidden" name="url" value="<%= link %>">
+                      <input type="hidden" name="publisher" value="<%= rev.publisher %>">
+                      <input type="hidden" name="title" value="<%= rev.title || "" %>">
+                      <input type="hidden" name="rating" value="<%= rev.rating || "" %>">
+                      <input type="hidden" name="review_date" value="<%= rev.reviewDate || "" %>">
+                      <input type="hidden" name="reviewed_claim" value="<%= r.text %>">
+                      <input type="hidden" name="claimant" value="<%= r.claimant || "" %>">
+                      <button type="submit" class="button button-small" aria-label="Pin this fact-check to the claim">Pin</button>
+                    </form>
+                  <% } %>
                 <% } %>
               </li>
             <% }) %>

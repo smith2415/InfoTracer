@@ -60,6 +60,26 @@ assess as intentionally spreading disinformation. One table for everyone.
 **Primary key:** user_id + observation_id together, so a user can weed an
 observation only once.
 
+### pinned_fact_checks
+Fact-check articles a user has pinned to a claim from the fact-check lookup.
+The details are copied from Google Fact Check Explorer when pinned, so they
+stay on the claim even if the search results change later.
+
+| Column | Type | Notes |
+| --- | --- | --- |
+| id | number | Primary key |
+| claim_id | number | The claim it's pinned to; links to claims.id |
+| url | text | Required; link to the fact-check article |
+| publisher | text | The fact-checking organization |
+| title | text | The article's headline |
+| rating | text | The fact-checker's rating, e.g. "False" |
+| review_date | date and time | When the fact-check was published |
+| reviewed_claim | text | The claim as the fact-checker worded it |
+| claimant | text | Who the fact-checker says made the claim |
+| created_at | date and time | When it was pinned; set automatically |
+
+Each article can be pinned once per claim (claim_id + url is unique).
+
 ### session
 Created by the login system (connect-pg-simple) to keep users signed in. It
 isn't part of the app's own data model.
@@ -72,8 +92,11 @@ isn't part of the app's own data model.
   listed oldest first, with blank times at the end.
 - **users ↔ observations (through weeds): many-to-many.** A user can weed many
   observations, and the weeds table records each one.
+- **claims → pinned_fact_checks: one-to-many.** Each claim can have many
+  pinned fact-checks.
 - Deleting a user deletes their claims and weeds; deleting a claim deletes its
-  observations; deleting an observation deletes its weeds.
+  observations and pinned fact-checks; deleting an observation deletes its
+  weeds.
 - Every query in `src/models.js` is filtered by the signed-in user, so no user
   can read or change another user's claims or observations.
 
@@ -83,9 +106,15 @@ erDiagram
     claims ||--o{ observations : has
     users ||--o{ weeds : marks
     observations ||--o{ weeds : "marked as"
+    claims ||--o{ pinned_fact_checks : "has pinned"
 ```
 
 ## Compared with PLAN.md section 3
+
+**Added after the plan:** `pinned_fact_checks` wasn't in PLAN.md. It came from
+using the fact-check lookup: once real results came back, it was clear the
+useful ones needed to stay with the claim.
+
 
 All four tables match the plan's columns, types and keys. A few rules were
 added in the database itself to enforce the plan:

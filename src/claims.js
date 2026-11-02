@@ -1,6 +1,6 @@
 import express from "express";
 import { requireLogin } from "./auth.js";
-import { fromDateTimeInput } from "./format.js";
+import { fromDateTimeInput, safeUrl } from "./format.js";
 import { validateClaim, validateObservation, hasErrors } from "./validation.js";
 import { buildTimeline } from "./timeline.js";
 import { FactCheckError, FACT_CHECK_MESSAGES, REASON_HINTS, ratingTone } from "./factcheck.js";
@@ -25,6 +25,9 @@ import {
   removeWeed,
   listWeeds,
   getDashboardStats,
+  listPinnedFactChecks,
+  pinFactCheck,
+  unpinFactCheck,
 } from "./models.js";
 
 // Where to go after marking or unmarking a weed: back to the Weeds view if
@@ -173,7 +176,17 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
         sourceSearch = req.session.sourceSearch;
         delete req.session.sourceSearch;
       }
-      res.render("claim", { title: "Claim", claim, observations, timeline, sourceSearch, savePerSource: SAVE_PER_SOURCE });
+      const pins = await listPinnedFactChecks(pool, req.session.userId, id);
+      res.render("claim", {
+        title: "Claim",
+        claim,
+        observations,
+        timeline,
+        sourceSearch,
+        savePerSource: SAVE_PER_SOURCE,
+        pins,
+        ratingTone,
+      });
     } catch (err) {
       next(err);
     }
@@ -258,7 +271,58 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
         }
       }
 
-      res.render("fact-checks", { title: "Fact-checks", claim, query, results, error, ratingTone });
+      // Which results are already pinned, by link, so each shows Pin or Unpin.
+      const pinned = new Map(
+        (await listPinnedFactChecks(pool, req.session.userId, id)).map((p) => [urlKey(p.url), p.id])
+      );
+      res.render("fact-checks", { title: "Fact-checks", claim, query, results, error, ratingTone, pinned, urlKey });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Back to the results page the pin came from, or to the claim page.
+  function afterPin(body, claimId) {
+    if (body.return_to === "results") {
+      const q = typeof body.q === "string" ? body.q.slice(0, 200) : "";
+      return `/claims/${claimId}/fact-checks?q=${encodeURIComponent(q)}`;
+    }
+    return `/claims/${claimId}#pinned-fact-checks`;
+  }
+
+  router.post("/claims/:id/fact-checks/pin", async (req, res, next) => {
+    try {
+      const id = idParam(req.params.id);
+      const url = safeUrl(req.body.url);
+      if (!id) return notFound(res);
+      if (!url) {
+        return res.status(400).render("message", {
+          title: "Can't pin this fact-check",
+          message: "This fact-check doesn't have a valid link, so it can't be pinned.",
+        });
+      }
+      const pinned = await pinFactCheck(pool, req.session.userId, id, {
+        url,
+        publisher: req.body.publisher,
+        title: req.body.title,
+        rating: req.body.rating,
+        reviewDate: req.body.review_date,
+        reviewedClaim: req.body.reviewed_claim,
+        claimant: req.body.claimant,
+      });
+      if (!pinned) return notFound(res);
+      res.redirect(afterPin(req.body, id));
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  router.post("/fact-check-pins/:pinId/unpin", requireLogin, async (req, res, next) => {
+    try {
+      const pinId = idParam(req.params.pinId);
+      const claimId = pinId && (await unpinFactCheck(pool, req.session.userId, pinId));
+      if (!claimId) return notFound(res);
+      res.redirect(afterPin(req.body, claimId));
     } catch (err) {
       next(err);
     }

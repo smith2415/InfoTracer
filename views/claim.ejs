@@ -23,16 +23,42 @@
   <% } %>
 </section>
 
-<section class="factcheck-card" aria-labelledby="factcheck-heading">
-  <div>
-    <h2 id="factcheck-heading">Fact-check lookup</h2>
-    <p class="muted">See whether fact-checkers have already looked at this claim.</p>
+<section class="tool-card" id="pinned-fact-checks" aria-labelledby="factcheck-heading">
+  <div class="tool-card-row">
+    <div>
+      <h2 id="factcheck-heading">Fact-check lookup</h2>
+      <p class="muted">See whether fact-checkers have already looked at this claim, and pin the ones you rely on.</p>
+    </div>
+    <form method="get" action="/claims/<%= claim.id %>/fact-checks" class="factcheck-form" role="search">
+      <label for="fc-q" class="visually-hidden">Search fact-checks for</label>
+      <input id="fc-q" name="q" value="<%= claim.hook || claim.claim_text %>" maxlength="200">
+      <button type="submit" class="button">Search fact-checks</button>
+    </form>
   </div>
-  <form method="get" action="/claims/<%= claim.id %>/fact-checks" class="factcheck-form" role="search">
-    <label for="fc-q" class="visually-hidden">Search fact-checks for</label>
-    <input id="fc-q" name="q" value="<%= claim.hook || claim.claim_text %>" maxlength="200">
-    <button type="submit" class="button">Search fact-checks</button>
-  </form>
+
+  <% if (pins.length > 0) { %>
+    <div class="pinned-list">
+      <h3 class="pinned-heading">Pinned fact-checks <span class="count"><%= pins.length %></span></h3>
+      <ul class="review-list">
+        <% pins.forEach((p) => { const link = safeUrl(p.url); %>
+          <li class="review">
+            <% if (p.rating) { %><span class="rating rating-<%= ratingTone(p.rating) %>"><%= p.rating %></span><% } %>
+            <div class="review-body">
+              <span class="review-source">
+                <strong><%= p.publisher || "Unknown publisher" %></strong>
+                <% if (p.review_date) { %><span class="muted-inline"> · <%= formatDate(p.review_date) %></span><% } %>
+              </span>
+              <% if (link) { %><a class="review-title" href="<%= link %>" target="_blank" rel="noopener noreferrer"><%= p.title || "Read the fact-check" %></a><% } %>
+              <% if (p.reviewed_claim) { %><span class="pinned-claim">Reviewed: "<%= p.reviewed_claim %>"<% if (p.claimant) { %> (<%= p.claimant %>)<% } %></span><% } %>
+            </div>
+            <form method="post" action="/fact-check-pins/<%= p.id %>/unpin" class="inline-form review-pin">
+              <button type="submit" class="link-button unpin-link" aria-label="Unpin this fact-check">Unpin</button>
+            </form>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  <% } %>
 </section>
 
 <%- include("partials/source-search", { claim, sourceSearch, savePerSource }) %>

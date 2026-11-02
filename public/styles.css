@@ -395,21 +395,25 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .factcheck-meta:empty { display: none; }
 .review-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .review {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 2px 10px;
-  align-items: baseline;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
   padding-top: 8px;
   border-top: 1px solid var(--border);
 }
+.review .rating { margin-top: 1px; }
+.review-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.review-pin { flex-shrink: 0; }
+.button-small { padding: 4px 12px; font-size: 13px; }
+.button.is-pinned { background: #1d2a12; color: #c0dd97; border-color: var(--seed); }
+.button.is-pinned:hover { background: #2a1515; color: #f09595; border-color: var(--weed); }
 .review-source { font-size: 14px; }
 .review-source strong { font-weight: 500; }
-.review-title { grid-column: 2; font-size: 14px; overflow-wrap: anywhere; }
+.review-title { font-size: 14px; overflow-wrap: anywhere; }
 .rating { padding: 2px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; white-space: nowrap; }
 .rating-false { background: #2a1515; color: #f09595; }
 .rating-true { background: #1d2a12; color: #c0dd97; }
 .rating-neutral { background: #412402; color: var(--status); }
-.review > .review-source:first-child, .review > .review-title:nth-child(2) { grid-column: 1 / -1; }
 
 .search-tips { margin: -4px 0 16px; font-size: 14px; color: var(--muted); }
 .search-tips summary { cursor: pointer; color: var(--seed-light); width: fit-content; }
@@ -430,6 +434,12 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .source-line strong { font-weight: 500; }
 .source-error { color: #f09595; }
 .source-warning { display: block; margin-top: 2px; color: var(--status); font-size: 13px; }
+
+.pinned-list { margin-top: 14px; }
+.pinned-heading { margin: 0 0 4px; font-size: 14px; font-weight: 500; }
+.pinned-claim { font-size: 13px; color: var(--muted); font-family: var(--mono); overflow-wrap: anywhere; }
+.unpin-link { font-size: 13px; }
+.unpin-link:hover { color: #f09595; }
 
 .site-footer {
   padding: 16px 24px;
