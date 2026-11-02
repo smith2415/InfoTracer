@@ -113,12 +113,14 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
         location: typeof req.query.location === "string" ? req.query.location.trim() : "",
         sort: CLAIM_SORTS[req.query.sort] ? req.query.sort : "newest",
       };
-      const [claims, total, locations] = await Promise.all([
+      const filtering = Boolean(filters.q || filters.status || filters.location);
+      // Without a filter, the list is every claim, so it doubles as the count.
+      const [claims, count, locations] = await Promise.all([
         listClaims(pool, userId, filters),
-        countClaims(pool, userId),
+        filtering ? countClaims(pool, userId) : null,
         listLocations(pool, userId),
       ]);
-      const filtering = Boolean(filters.q || filters.status || filters.location);
+      const total = filtering ? count : claims.length;
       res.render("claims", {
         title: "Claims",
         claims,
@@ -402,10 +404,10 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   router.post("/claims/:id", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const existing = id && (await getClaim(pool, req.session.userId, id));
-      if (!existing) return notFound(res);
+      if (!id) return notFound(res);
       const errors = validateClaim(req.body);
       if (hasErrors(errors)) {
+        if (!(await getClaim(pool, req.session.userId, id))) return notFound(res);
         return res.status(400).render("claim-form", {
           title: "Edit claim",
           claim: claimFromBody(req.body, id),
@@ -473,10 +475,11 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   router.post("/claims/:id/observations", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const claim = id && (await getClaim(pool, req.session.userId, id));
-      if (!claim) return notFound(res);
+      if (!id) return notFound(res);
       const errors = validateObservation(req.body);
       if (hasErrors(errors)) {
+        const claim = await getClaim(pool, req.session.userId, id);
+        if (!claim) return notFound(res);
         return res.status(400).render("observation-form", {
           title: "Add observation",
           claim,
@@ -514,10 +517,11 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   router.post("/observations/:id", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const existing = id && (await getObservation(pool, req.session.userId, id));
-      if (!existing) return notFound(res);
+      if (!id) return notFound(res);
       const errors = validateObservation(req.body);
       if (hasErrors(errors)) {
+        const existing = await getObservation(pool, req.session.userId, id);
+        if (!existing) return notFound(res);
         const claim = await getClaim(pool, req.session.userId, existing.claim_id);
         return res.status(400).render("observation-form", {
           title: "Edit observation",
@@ -557,10 +561,9 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   router.post("/observations/:id/delete", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const observation = id && (await getObservation(pool, req.session.userId, id));
-      if (!observation) return notFound(res);
-      await deleteObservation(pool, req.session.userId, id);
-      res.redirect(`/claims/${observation.claim_id}`);
+      const claimId = id && (await deleteObservation(pool, req.session.userId, id));
+      if (!claimId) return notFound(res);
+      res.redirect(`/claims/${claimId}`);
     } catch (err) {
       next(err);
     }
@@ -569,10 +572,9 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   router.post("/observations/:id/seed", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const observation = id && (await getObservation(pool, req.session.userId, id));
-      if (!observation) return notFound(res);
-      await setSeed(pool, req.session.userId, id);
-      res.redirect(`/claims/${observation.claim_id}#observation-${id}`);
+      const claimId = id && (await setSeed(pool, req.session.userId, id));
+      if (!claimId) return notFound(res);
+      res.redirect(`/claims/${claimId}#observation-${id}`);
     } catch (err) {
       next(err);
     }
@@ -603,10 +605,9 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   router.post("/observations/:id/weed", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const observation = id && (await getObservation(pool, req.session.userId, id));
-      if (!observation) return notFound(res);
-      await addWeed(pool, req.session.userId, id);
-      res.redirect(afterWeed(req.body, observation));
+      const claimId = id && (await addWeed(pool, req.session.userId, id));
+      if (!claimId) return notFound(res);
+      res.redirect(afterWeed(req.body, { id, claim_id: claimId }));
     } catch (err) {
       next(err);
     }
@@ -615,10 +616,9 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   router.post("/observations/:id/unweed", async (req, res, next) => {
     try {
       const id = idParam(req.params.id);
-      const observation = id && (await getObservation(pool, req.session.userId, id));
-      if (!observation) return notFound(res);
-      await removeWeed(pool, req.session.userId, id);
-      res.redirect(afterWeed(req.body, observation));
+      const claimId = id && (await removeWeed(pool, req.session.userId, id));
+      if (!claimId) return notFound(res);
+      res.redirect(afterWeed(req.body, { id, claim_id: claimId }));
     } catch (err) {
       next(err);
     }

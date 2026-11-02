@@ -4,7 +4,6 @@
 // rows, so one user can never read or change another user's investigations.
 
 export const CLAIM_STATUSES = ["tracing", "traced", "dead end"];
-export const SOURCES = ["bluesky", "gdelt", "xpoz", "manual"];
 export const MAX_TEXT_LENGTH = 2000;
 
 // Empty strings are stored as NULL so missing details stay blank (and are
@@ -259,18 +258,21 @@ export async function updateObservation(pool, userId, observationId, fields) {
   return rows[0] || null;
 }
 
+// Returns the deleted observation's claim id, or null if it isn't the user's.
 export async function deleteObservation(pool, userId, observationId) {
-  const { rowCount } = await pool.query(
+  const { rows } = await pool.query(
     `DELETE FROM observations o
       USING claims c
-      WHERE o.id = $1 AND o.claim_id = c.id AND c.user_id = $2`,
+      WHERE o.id = $1 AND o.claim_id = c.id AND c.user_id = $2
+      RETURNING o.claim_id`,
     [observationId, userId]
   );
-  return rowCount > 0;
+  return rows[0]?.claim_id ?? null;
 }
 
 // Makes one observation the claim's seed and clears any previous seed,
 // in a single transaction so a claim never ends up with two.
+// Returns the claim id, or null if the observation isn't the user's.
 export async function setSeed(pool, userId, observationId) {
   const client = await pool.connect();
   try {
@@ -284,7 +286,7 @@ export async function setSeed(pool, userId, observationId) {
     );
     if (rows.length === 0) {
       await client.query("ROLLBACK");
-      return false;
+      return null;
     }
     await client.query(
       "UPDATE observations SET is_seed = false WHERE claim_id = $1 AND is_seed",
@@ -292,7 +294,7 @@ export async function setSeed(pool, userId, observationId) {
     );
     await client.query("UPDATE observations SET is_seed = true WHERE id = $1", [observationId]);
     await client.query("COMMIT");
-    return true;
+    return rows[0].claim_id;
   } catch (err) {
     await client.query("ROLLBACK");
     throw err;
@@ -306,24 +308,43 @@ export async function setSeed(pool, userId, observationId) {
 // spreading disinformation. Each row in the weeds table means
 // "this user marked this observation as a weed."
 
-// Returns false if the observation isn't the user's.
+// Both check the observation is the user's and change the weed in a single
+// query. They return the observation's claim id, or null if it isn't the
+// user's (in which case nothing changes).
 export async function addWeed(pool, userId, observationId) {
-  const owned = await getObservation(pool, userId, observationId);
-  if (!owned) return false;
-  await pool.query(
-    `INSERT INTO weeds (user_id, observation_id) VALUES ($1, $2)
-     ON CONFLICT DO NOTHING`,
-    [userId, observationId]
+  const { rows } = await pool.query(
+    `WITH owned AS (
+       SELECT o.id, o.claim_id
+         FROM observations o
+         JOIN claims c ON c.id = o.claim_id
+        WHERE o.id = $1 AND c.user_id = $2
+     ), added AS (
+       INSERT INTO weeds (user_id, observation_id)
+       SELECT $2, id FROM owned
+       ON CONFLICT DO NOTHING
+     )
+     SELECT claim_id FROM owned`,
+    [observationId, userId]
   );
-  return true;
+  return rows[0]?.claim_id ?? null;
 }
 
 export async function removeWeed(pool, userId, observationId) {
-  const { rowCount } = await pool.query(
-    "DELETE FROM weeds WHERE user_id = $1 AND observation_id = $2",
-    [userId, observationId]
+  const { rows } = await pool.query(
+    `WITH owned AS (
+       SELECT o.id, o.claim_id
+         FROM observations o
+         JOIN claims c ON c.id = o.claim_id
+        WHERE o.id = $1 AND c.user_id = $2
+     ), removed AS (
+       DELETE FROM weeds w
+        USING owned
+        WHERE w.observation_id = owned.id AND w.user_id = $2
+     )
+     SELECT claim_id FROM owned`,
+    [observationId, userId]
   );
-  return rowCount > 0;
+  return rows[0]?.claim_id ?? null;
 }
 
 // Every observation the user has weeded, with its claim, newest weed first.
@@ -441,13 +462,17 @@ export async function listPinnedFactChecks(pool, userId, claimId) {
 // Pins a fact-check to the user's claim. Pinning the same article twice
 // keeps one pin. Returns false if the claim isn't the user's.
 export async function pinFactCheck(pool, userId, claimId, fields) {
-  const claim = await getClaim(pool, userId, claimId);
-  if (!claim) return false;
-  await pool.query(
-    `INSERT INTO pinned_fact_checks
-       (claim_id, url, publisher, title, rating, review_date, reviewed_claim, claimant)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-     ON CONFLICT (claim_id, url) DO NOTHING`,
+  // Checks ownership and pins in one query.
+  const { rows } = await pool.query(
+    `WITH owned AS (
+       SELECT id FROM claims WHERE id = $1 AND user_id = $9
+     ), pinned AS (
+       INSERT INTO pinned_fact_checks
+         (claim_id, url, publisher, title, rating, review_date, reviewed_claim, claimant)
+       SELECT id, $2::text, $3::text, $4::text, $5::text, $6::timestamptz, $7::text, $8::text FROM owned
+       ON CONFLICT (claim_id, url) DO NOTHING
+     )
+     SELECT EXISTS (SELECT 1 FROM owned) AS ok`,
     [
       claimId,
       fields.url,
@@ -457,9 +482,10 @@ export async function pinFactCheck(pool, userId, claimId, fields) {
       validDate(fields.reviewDate),
       clip(fields.reviewedClaim, 1000),
       clip(fields.claimant, 200),
+      userId,
     ]
   );
-  return true;
+  return rows[0].ok;
 }
 
 // Returns the pin's claim id, or null if the pin isn't the user's.
