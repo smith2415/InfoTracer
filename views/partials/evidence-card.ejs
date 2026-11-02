@@ -1,6 +1,6 @@
 <% const classes = ["evidence-card", o.is_seed ? "is-seed" : "", o.is_weed ? "is-weed" : ""].join(" ").trim(); %>
 <li class="<%= classes %>" id="observation-<%= o.id %>">
-  <% if (context === "weeds") { %>
+  <% if (context === "weeds" && !locals.grouped) { %>
     <a class="evidence-claim" href="/claims/<%= o.claim_id %>#observation-<%= o.id %>">"<%= o.claim_text %>"</a>
   <% } %>
   <div class="evidence-top">
