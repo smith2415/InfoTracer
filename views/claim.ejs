@@ -35,6 +35,8 @@
   </form>
 </section>
 
+<%- include("partials/source-search", { claim, sourceSearch, savePerSource }) %>
+
 <% if (observations.length > 0) { %>
   <%- include("partials/timeline", { timeline }) %>
 <% } %>

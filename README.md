@@ -15,7 +15,11 @@ online information was first introduced into the information environment.
    with a Google Cloud API key that has the **Fact Check Tools API** enabled.
    Without it, the rest of the app works and the lookup explains it isn't set
    up.
-5. Press **Run**. The app creates its tables on first start.
+5. For the source search, add `BLUESKY_HANDLE` (e.g. `yourname.bsky.social`)
+   and `BLUESKY_APP_PASSWORD`. Create the app password in Bluesky under
+   **Settings → Privacy and security → App passwords**; never use your main
+   password.
+6. Press **Run**. The app creates its tables on first start.
 
 ### Updating the live app after a merge
 

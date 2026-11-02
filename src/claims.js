@@ -4,6 +4,7 @@ import { fromDateTimeInput } from "./format.js";
 import { validateClaim, validateObservation, hasErrors } from "./validation.js";
 import { buildTimeline } from "./timeline.js";
 import { FactCheckError, FACT_CHECK_MESSAGES, REASON_HINTS, ratingTone } from "./factcheck.js";
+import { searchAllSources, SAVE_PER_SOURCE, urlKey } from "./sources/index.js";
 import {
   CLAIM_STATUSES,
   CLAIM_SORTS,
@@ -91,7 +92,7 @@ function observationFields(body) {
   };
 }
 
-export function claimsRouter(pool, { factCheckSearch } = {}) {
+export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   const router = express.Router();
   router.use(["/claims", "/observations"], requireLogin);
 
@@ -165,7 +166,64 @@ export function claimsRouter(pool, { factCheckSearch } = {}) {
       const timeline = buildTimeline(observations);
       const earliest = timeline.points.find((p) => p.isEarliest);
       for (const o of observations) o.is_earliest = Boolean(earliest && earliest.id === o.id);
-      res.render("claim", { title: "Claim", claim, observations, timeline });
+
+      // The result of a source search, shown once after it runs.
+      let sourceSearch = null;
+      if (req.session.sourceSearch?.claimId === id) {
+        sourceSearch = req.session.sourceSearch;
+        delete req.session.sourceSearch;
+      }
+      res.render("claim", { title: "Claim", claim, observations, timeline, sourceSearch, savePerSource: SAVE_PER_SOURCE });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ---------- Source search (Custom #3) ----------
+
+  router.post("/claims/:id/source-search", async (req, res, next) => {
+    try {
+      const id = idParam(req.params.id);
+      const userId = req.session.userId;
+      const claim = id && (await getClaim(pool, userId, id));
+      if (!claim) return notFound(res);
+
+      const asked = typeof req.body.q === "string" ? req.body.q : claim.hook || claim.claim_text;
+      const query = asked.trim().slice(0, 200);
+      const summary = { claimId: id, query, sources: [] };
+
+      if (!query) {
+        summary.error = "Enter a phrase to search for, such as the claim's hook.";
+      } else {
+        const outcomes = await searchAllSources(sources, query);
+        const saved = new Set(
+          (await listObservations(pool, userId, id)).map((o) => urlKey(o.url)).filter(Boolean)
+        );
+
+        for (const outcome of outcomes) {
+          if (outcome.error) {
+            summary.sources.push({ label: outcome.label, error: outcome.error });
+            continue;
+          }
+          const { observations, totalFound, reachedEnd } = outcome.result;
+          const fresh = observations.filter((o) => !saved.has(urlKey(o.url)));
+          const toSave = fresh.slice(0, SAVE_PER_SOURCE); // the earliest ones
+          for (const fields of toSave) {
+            await addObservation(pool, userId, id, fields);
+            saved.add(urlKey(fields.url));
+          }
+          summary.sources.push({
+            label: outcome.label,
+            found: totalFound,
+            saved: toSave.length,
+            alreadySaved: observations.length - fresh.length,
+            reachedEnd,
+          });
+        }
+      }
+
+      req.session.sourceSearch = summary;
+      res.redirect(`/claims/${id}#source-search`);
     } catch (err) {
       next(err);
     }
