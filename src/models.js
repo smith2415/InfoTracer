@@ -341,6 +341,19 @@ export async function listWeeds(pool, userId) {
   return rows;
 }
 
+// Groups weeds (from listWeeds) under their claims. Claims come in order of
+// their most recent weed, and each claim's weeds stay newest first.
+export function groupWeedsByClaim(weeds) {
+  const groups = new Map();
+  for (const weed of weeds) {
+    if (!groups.has(weed.claim_id)) {
+      groups.set(weed.claim_id, { claimId: weed.claim_id, claimText: weed.claim_text, weeds: [] });
+    }
+    groups.get(weed.claim_id).weeds.push(weed);
+  }
+  return [...groups.values()];
+}
+
 // ---------- Dashboard ----------
 
 // Share of observations marked as weeds, as a whole-number percentage.

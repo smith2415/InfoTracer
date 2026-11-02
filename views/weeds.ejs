@@ -3,7 +3,7 @@
   <div class="page-head">
     <div>
       <h1>Weeds <span class="count"><%= weeds.length %></span></h1>
-      <p class="muted">Observations you've assessed as intentionally spreading disinformation, across all your claims.</p>
+      <p class="muted">Observations you've assessed as intentionally spreading disinformation, grouped by claim<% if (groups.length > 1) { %> (<%= groups.length %> claims)<% } %>.</p>
     </div>
   </div>
 
@@ -14,11 +14,19 @@
       <a class="button" href="/claims">Go to your claims</a>
     </div>
   <% } else { %>
-    <ol class="evidence-list">
-      <% weeds.forEach((o) => { %>
-        <%- include("partials/evidence-card", { o, context: "weeds" }) %>
-      <% }) %>
-    </ol>
+    <% groups.forEach((g) => { %>
+      <section class="weed-group" aria-labelledby="weed-group-<%= g.claimId %>">
+        <h2 class="weed-group-heading" id="weed-group-<%= g.claimId %>">
+          <a href="/claims/<%= g.claimId %>">"<%= g.claimText %>"</a>
+          <span class="count"><%= g.weeds.length %></span>
+        </h2>
+        <ol class="evidence-list">
+          <% g.weeds.forEach((o) => { %>
+            <%- include("partials/evidence-card", { o, context: "weeds", grouped: true }) %>
+          <% }) %>
+        </ol>
+      </section>
+    <% }) %>
   <% } %>
 </section>
 <%- include("partials/footer") %>

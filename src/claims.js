@@ -26,6 +26,7 @@ import {
   addWeed,
   removeWeed,
   listWeeds,
+  groupWeedsByClaim,
   getDashboardStats,
   listPinnedFactChecks,
   pinFactCheck,
@@ -551,7 +552,7 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   router.get("/weeds", requireLogin, async (req, res, next) => {
     try {
       const weeds = await listWeeds(pool, req.session.userId);
-      res.render("weeds", { title: "Weeds", weeds });
+      res.render("weeds", { title: "Weeds", weeds, groups: groupWeedsByClaim(weeds) });
     } catch (err) {
       next(err);
     }

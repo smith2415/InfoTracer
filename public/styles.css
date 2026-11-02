@@ -465,3 +465,9 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
   .filter-bar { grid-template-columns: repeat(3, 1fr); }
   .filter-search { grid-column: 1 / -1; }
 }
+
+/* Weeds page, grouped by claim */
+.weed-group { margin-bottom: 28px; }
+.weed-group-heading { display: flex; align-items: baseline; gap: 10px; margin: 0 0 10px; font-size: 17px; font-weight: 500; }
+.weed-group-heading a { color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
+.weed-group-heading a:hover { color: var(--seed-light); }
