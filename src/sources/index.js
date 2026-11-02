@@ -3,6 +3,7 @@
 
 import { SourceError } from "./source-error.js";
 import { createBlueskySource } from "./bluesky.js";
+import { createGdeltSource } from "./gdelt.js";
 
 export { SourceError };
 
@@ -19,10 +20,15 @@ export const SOURCE_MESSAGES = {
     rate_limited: "Bluesky is limiting searches right now. Try again in a few minutes.",
     unavailable: "Couldn't reach Bluesky. Try again in a moment.",
   },
+  gdelt: {
+    rejected: "GDELT couldn't run that search. Try a different phrase.",
+    rate_limited: "GDELT is limiting searches right now. Wait a minute and try again.",
+    unavailable: "GDELT didn't respond. Its servers can be slow; try again in a moment.",
+  },
 };
 
 export function createDefaultSources() {
-  return [createBlueskySource()];
+  return [createBlueskySource(), createGdeltSource()];
 }
 
 // Runs all sources at once, so a slow or failing one doesn't hold up the rest.
@@ -30,12 +36,13 @@ export function createDefaultSources() {
 export async function searchAllSources(sources, query) {
   const settled = await Promise.allSettled(sources.map((s) => s.search(query)));
   return settled.map((outcome, i) => {
-    const { name, label } = sources[i];
-    if (outcome.status === "fulfilled") return { name, label, result: outcome.value };
+    const { name, label, unit = "post" } = sources[i];
+    if (outcome.status === "fulfilled") return { name, label, unit, result: outcome.value };
     const err = outcome.reason;
     if (!(err instanceof SourceError)) throw err;
     console.warn(`${label}: ${err.message}`); // never includes credentials
-    const message = SOURCE_MESSAGES[name]?.[err.kind] || `${label} search didn't work. Try again later.`;
+    let message = SOURCE_MESSAGES[name]?.[err.kind] || `${label} search didn't work. Try again later.`;
+    if (err.detail) message += ` ${label} said: "${err.detail}"`;
     return { name, label, error: message };
   });
 }

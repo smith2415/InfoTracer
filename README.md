@@ -18,7 +18,8 @@ online information was first introduced into the information environment.
 5. For the source search, add `BLUESKY_HANDLE` (e.g. `yourname.bsky.social`)
    and `BLUESKY_APP_PASSWORD`. Create the app password in Bluesky under
    **Settings → Privacy and security → App passwords**; never use your main
-   password.
+   password. The source search also checks news coverage through GDELT,
+   which needs no key.
 6. Press **Run**. The app creates its tables on first start.
 
 ### Updating the live app after a merge
