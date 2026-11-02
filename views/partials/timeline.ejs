@@ -1,0 +1,56 @@
+<%
+  const t = timeline;
+  const height = 70 + t.rows * 26;
+  const axisY = height - 34;
+  const rowY = (row) => axisY - 18 - row * 26;
+%>
+<section class="timeline-card" aria-labelledby="timeline-heading">
+  <div class="timeline-head">
+    <h2 id="timeline-heading">Origin timeline</h2>
+    <div class="timeline-key" aria-hidden="true">
+      <span><i class="key-dot key-seed"></i>seed</span>
+      <span><i class="key-dot key-weed"></i>weed</span>
+      <span><i class="key-dot key-obs"></i>observation</span>
+    </div>
+  </div>
+
+  <% if (!t.summary) { %>
+    <p class="muted timeline-empty">Add a posting time to an observation to place it on the timeline.</p>
+  <% } else { %>
+    <p class="timeline-summary">
+      Earliest found: <strong><%= t.summary.earliestDate %></strong> on <strong><%= t.summary.earliestLocation %></strong><% if (t.summary.earliestPoster) { %> by <strong><%= t.summary.earliestPoster %></strong><% } %>.
+      <% if (t.summary.spread) { %>Spread across <%= t.summary.datedCount %> sightings <%= t.summary.spread %>.<% } %>
+      <% if (!t.summary.earliestIsSeed) { %><span class="muted-inline">The earliest found isn't marked as the seed.</span><% } %>
+    </p>
+
+    <div class="timeline-scroll">
+    <svg class="timeline-svg" viewBox="0 0 1000 <%= height %>" role="img"
+         aria-label="Timeline of <%= t.summary.datedCount %> dated observations, earliest on <%= t.summary.earliestDate %>">
+      <line class="vine" x1="40" x2="960" y1="<%= axisY %>" y2="<%= axisY %>" />
+      <% t.ticks.forEach((tick) => { %>
+        <line class="tick" x1="<%= tick.x %>" x2="<%= tick.x %>" y1="<%= axisY %>" y2="<%= axisY + 6 %>" />
+        <text class="tick-label" x="<%= tick.x %>" y="<%= axisY + 22 %>" text-anchor="middle"><%= tick.label %></text>
+      <% }) %>
+      <% t.points.forEach((p) => { const y = rowY(p.row); %>
+        <a href="#observation-<%= p.id %>" class="marker marker-<%= p.kind %>">
+          <title><%= p.label %><%= p.kind === "seed" ? " (seed)" : "" %><%= p.isWeed ? " (weed)" : "" %><%= p.isEarliest ? " (earliest found)" : "" %></title>
+          <line class="stem" x1="<%= p.x %>" x2="<%= p.x %>" y1="<%= y %>" y2="<%= axisY %>" />
+          <% if (p.kind === "seed") { %>
+            <circle cx="<%= p.x %>" cy="<%= y %>" r="9" />
+            <% if (p.isWeed) { %><circle class="weed-ring" cx="<%= p.x %>" cy="<%= y %>" r="13" /><% } %>
+          <% } else { %>
+            <circle cx="<%= p.x %>" cy="<%= y %>" r="7" />
+          <% } %>
+        </a>
+      <% }) %>
+    </svg>
+    </div>
+  <% } %>
+
+  <% if (t.undated.length > 0) { %>
+    <p class="timeline-undated">
+      <%= t.undated.length %> observation<%= t.undated.length === 1 ? "" : "s" %> without a posting time:
+      <% t.undated.forEach((o, i) => { %><a href="#observation-<%= o.id %>"><%= o.location %><%= o.poster ? " · " + o.poster : "" %></a><%= i < t.undated.length - 1 ? ", " : "" %><% }) %>
+    </p>
+  <% } %>
+</section>
