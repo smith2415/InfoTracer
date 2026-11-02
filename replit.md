@@ -6,7 +6,8 @@
   installs only the packages the app needs to run.
 - The app requires Node.js 20+ and PostgreSQL. Replit provides `DATABASE_URL`;
   the app creates its tables when it starts.
-- Configure `SESSION_SECRET` in Replit Secrets before publishing.
+- Configure `SESSION_SECRET` and `GOOGLE_FACTCHECK_API_KEY` in Replit Secrets
+  before publishing.
 - Replit's package security filter blocks `tinypool`, a dependency of the test
   runner (Vitest), so the automated tests aren't run on Replit. They run in a
   local or CI environment with `npm test` (see README.md).

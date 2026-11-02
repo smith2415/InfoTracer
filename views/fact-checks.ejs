@@ -1,0 +1,58 @@
+<%- include("partials/header") %>
+<p class="breadcrumb"><a href="/claims/<%= claim.id %>">← "<%= claim.claim_text %>"</a></p>
+
+<section>
+  <div class="page-head">
+    <div>
+      <h1>Fact-checks</h1>
+      <p class="muted">Published fact-checks from Google Fact Check Explorer, which collects reviews from fact-checking organizations.</p>
+    </div>
+  </div>
+
+  <form method="get" action="/claims/<%= claim.id %>/fact-checks" class="factcheck-form factcheck-form-page" role="search">
+    <label for="fc-q" class="visually-hidden">Search fact-checks for</label>
+    <input id="fc-q" name="q" value="<%= query %>" maxlength="200" placeholder="A distinctive phrase from the claim">
+    <button type="submit" class="button">Search</button>
+  </form>
+
+  <% if (error) { %>
+    <p class="form-error" role="alert"><%= error %></p>
+  <% } else if (results.length === 0) { %>
+    <div class="empty-state">
+      <p class="empty-title">No fact-checks found for "<%= query %>"</p>
+      <p class="muted">That doesn't mean the claim is true. It may be new, or fact-checkers may have worded it differently. Try the hook, or a shorter phrase.</p>
+    </div>
+  <% } else { %>
+    <p class="result-count"><%= results.length %> fact-checked claim<%= results.length === 1 ? "" : "s" %> matching "<%= query %>"</p>
+    <ol class="factcheck-list">
+      <% results.forEach((r) => { %>
+        <li class="factcheck-result">
+          <p class="factcheck-claim">"<%= r.text || "Claim text not provided" %>"</p>
+          <p class="factcheck-meta">
+            <% if (r.claimant) { %>Claimed by <%= r.claimant %><% } %>
+            <% if (r.claimant && r.claimDate) { %> · <% } %>
+            <% if (r.claimDate) { %><%= formatDate(r.claimDate) %><% } %>
+          </p>
+          <ul class="review-list">
+            <% r.reviews.forEach((rev) => { const link = safeUrl(rev.url); %>
+              <li class="review">
+                <% if (rev.rating) { %><span class="rating rating-<%= ratingTone(rev.rating) %>"><%= rev.rating %></span><% } %>
+                <span class="review-source">
+                  <strong><%= rev.publisher %></strong>
+                  <% if (rev.reviewDate) { %><span class="muted-inline"> · <%= formatDate(rev.reviewDate) %></span><% } %>
+                  <% if (rev.language && rev.language !== "en") { %><span class="tag"><%= rev.language %></span><% } %>
+                </span>
+                <% if (link) { %>
+                  <a class="review-title" href="<%= link %>" target="_blank" rel="noopener noreferrer"><%= rev.title || "Read the fact-check" %></a>
+                <% } else if (rev.title) { %>
+                  <span class="review-title"><%= rev.title %></span>
+                <% } %>
+              </li>
+            <% }) %>
+          </ul>
+        </li>
+      <% }) %>
+    </ol>
+  <% } %>
+</section>
+<%- include("partials/footer") %>
