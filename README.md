@@ -11,7 +11,11 @@ online information was first introduced into the information environment.
 2. Add a PostgreSQL database from the Replit tools panel. Replit sets
    `DATABASE_URL` for you.
 3. Add a secret named `SESSION_SECRET` with any long random string.
-4. Press **Run**. The app creates its tables on first start.
+4. For the fact-check lookup, add a secret named `GOOGLE_FACTCHECK_API_KEY`
+   with a Google Cloud API key that has the **Fact Check Tools API** enabled.
+   Without it, the rest of the app works and the lookup explains it isn't set
+   up.
+5. Press **Run**. The app creates its tables on first start.
 
 ### Updating the live app after a merge
 

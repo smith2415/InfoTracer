@@ -3,6 +3,7 @@ import { requireLogin } from "./auth.js";
 import { fromDateTimeInput } from "./format.js";
 import { validateClaim, validateObservation, hasErrors } from "./validation.js";
 import { buildTimeline } from "./timeline.js";
+import { FactCheckError, FACT_CHECK_MESSAGES, ratingTone } from "./factcheck.js";
 import {
   CLAIM_STATUSES,
   CLAIM_SORTS,
@@ -90,7 +91,7 @@ function observationFields(body) {
   };
 }
 
-export function claimsRouter(pool) {
+export function claimsRouter(pool, { factCheckSearch } = {}) {
   const router = express.Router();
   router.use(["/claims", "/observations"], requireLogin);
 
@@ -165,6 +166,37 @@ export function claimsRouter(pool) {
       const earliest = timeline.points.find((p) => p.isEarliest);
       for (const o of observations) o.is_earliest = Boolean(earliest && earliest.id === o.id);
       res.render("claim", { title: "Claim", claim, observations, timeline });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // ---------- Fact-check lookup (Custom #2) ----------
+
+  router.get("/claims/:id/fact-checks", async (req, res, next) => {
+    try {
+      const id = idParam(req.params.id);
+      const claim = id && (await getClaim(pool, req.session.userId, id));
+      if (!claim) return notFound(res);
+
+      const asked = typeof req.query.q === "string" ? req.query.q : claim.hook || claim.claim_text;
+      const query = asked.trim().slice(0, 200);
+      let results = null;
+      let error = null;
+
+      if (!query) {
+        error = "Enter a phrase to search for, such as the claim's hook.";
+      } else {
+        try {
+          results = await factCheckSearch(query);
+        } catch (err) {
+          if (!(err instanceof FactCheckError)) throw err;
+          console.warn(err.message); // never includes the API key
+          error = FACT_CHECK_MESSAGES[err.kind];
+        }
+      }
+
+      res.render("fact-checks", { title: "Fact-checks", claim, query, results, error, ratingTone });
     } catch (err) {
       next(err);
     }

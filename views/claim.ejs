@@ -23,6 +23,18 @@
   <% } %>
 </section>
 
+<section class="factcheck-card" aria-labelledby="factcheck-heading">
+  <div>
+    <h2 id="factcheck-heading">Fact-check lookup</h2>
+    <p class="muted">See whether fact-checkers have already looked at this claim.</p>
+  </div>
+  <form method="get" action="/claims/<%= claim.id %>/fact-checks" class="factcheck-form" role="search">
+    <label for="fc-q" class="visually-hidden">Search fact-checks for</label>
+    <input id="fc-q" name="q" value="<%= claim.hook || claim.claim_text %>" maxlength="200">
+    <button type="submit" class="button">Search fact-checks</button>
+  </form>
+</section>
+
 <% if (observations.length > 0) { %>
   <%- include("partials/timeline", { timeline }) %>
 <% } %>
