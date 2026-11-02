@@ -2,13 +2,18 @@
   <div class="tool-card-row">
     <div>
       <h2 id="source-search-heading">Source search</h2>
-      <p class="muted">Search Bluesky, news coverage (GDELT) and Xpoz and save the <%= savePerSource %> earliest matches from each as observations. Fill in anything shown as "-". News searches can take about 10 seconds.</p>
+      <p class="muted">Search Bluesky, news coverage (GDELT) and Xpoz and save the <%= savePerSource %> earliest matches from each as observations. Fill in anything shown as "-". A search can take up to a minute; the progress shows which sources are done.</p>
     </div>
-    <form method="post" action="/claims/<%= claim.id %>/source-search" class="factcheck-form">
+    <form method="post" action="/claims/<%= claim.id %>/source-search" class="factcheck-form" data-source-search>
       <label for="ss-q" class="visually-hidden">Search sources for</label>
       <input id="ss-q" name="q" value="<%= sourceSearch ? sourceSearch.query : (claim.hook || claim.claim_text) %>" maxlength="200">
       <button type="submit" class="button button-seed">Search sources</button>
     </form>
+  </div>
+
+  <div class="source-progress" id="source-progress" hidden>
+    <p class="progress-status" role="status" aria-live="polite"></p>
+    <ul class="progress-list"></ul>
   </div>
 
   <% if (sourceSearch) { %>
@@ -18,12 +23,12 @@
       <% } %>
       <% sourceSearch.sources.forEach((s) => { %>
         <% if (s.error) { %>
-          <p class="source-line source-error"><strong><%= s.label %>:</strong> <%= s.error %></p>
+          <p class="source-line source-error"><strong><%= s.label %>:</strong> <%= s.error %><%- include("source-time", { s }) %></p>
         <% } else if (s.found === 0) { %>
-          <p class="source-line"><strong><%= s.label %>:</strong> no <%= s.unit || "post" %>s found for "<%= sourceSearch.query %>". Try the hook, or a shorter phrase.</p>
+          <p class="source-line"><strong><%= s.label %>:</strong> no <%= s.unit || "post" %>s found for "<%= sourceSearch.query %>". Try the hook, or a shorter phrase.<%- include("source-time", { s }) %></p>
         <% } else { %>
           <p class="source-line">
-            <strong><%= s.label %>:</strong> found <%= s.found %> <%= s.unit || "post" %><%= s.found === 1 ? "" : "s" %>; <% if (s.saved > 0) { %>saved the <%= s.saved === 1 ? "earliest" : s.saved + " earliest" %> as observation<%= s.saved === 1 ? "" : "s" %><% } else { %>nothing new to save<% } %><% if (s.alreadySaved > 0) { %> (<%= s.alreadySaved %> already saved)<% } %>.
+            <strong><%= s.label %>:</strong> found <%= s.found %> <%= s.unit || "post" %><%= s.found === 1 ? "" : "s" %>; <% if (s.saved > 0) { %>saved the <%= s.saved === 1 ? "earliest" : s.saved + " earliest" %> as observation<%= s.saved === 1 ? "" : "s" %><% } else { %>nothing new to save<% } %><% if (s.alreadySaved > 0) { %> (<%= s.alreadySaved %> already saved)<% } %>.<%- include("source-time", { s }) %>
             <% if (s.warning) { %><span class="source-warning"><%= s.warning %></span><% } %>
             <% if (!s.reachedEnd) { %><span class="source-warning">Only the most recent <%= s.found %> matches were checked, so older posts may exist. A more specific phrase can reach further back.</span><% } %>
           </p>
@@ -32,3 +37,4 @@
     </div>
   <% } %>
 </section>
+<script src="/source-search.js" defer></script>
