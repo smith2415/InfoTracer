@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { createApp } from "../src/app.js";
 import { createPool, migrate } from "../src/db.js";
-import { createFactCheckSearch, parseFactChecks, ratingTone, FactCheckError } from "../src/factcheck.js";
+import { createFactCheckSearch, parseFactChecks, ratingTone, googleReason, FactCheckError } from "../src/factcheck.js";
 
 // Checks for Custom #2: fact-check lookup. These tests never call Google;
 // they use a stand-in that returns a response in the API's documented shape.
@@ -77,6 +77,31 @@ describe("fact-check search", () => {
   });
 });
 
+describe("Google's refusal reasons", () => {
+  const disabled = {
+    error: {
+      code: 403,
+      message: "Fact Check Tools API has not been used in project 123 before or it is disabled.",
+      status: "PERMISSION_DENIED",
+      details: [{ "@type": "type.googleapis.com/google.rpc.ErrorInfo", reason: "SERVICE_DISABLED" }],
+    },
+  };
+
+  it("reads the reason code from Google's error, preferring the specific one", () => {
+    expect(googleReason(disabled)).toBe("SERVICE_DISABLED");
+    expect(googleReason({ error: { status: "INVALID_ARGUMENT" } })).toBe("INVALID_ARGUMENT");
+    expect(googleReason({ error: { details: [{ reason: "<script>alert(1)</script>" }] } })).toBe("scriptalert1script");
+    expect(googleReason(null)).toBeNull();
+  });
+
+  it("attaches the reason to the error", async () => {
+    const search = createFactCheckSearch({ apiKey: "k", fetchImpl: fakeFetch(403, disabled) });
+    const err = await search("q").catch((e) => e);
+    expect(err.kind).toBe("rejected");
+    expect(err.reason).toBe("SERVICE_DISABLED");
+  });
+});
+
 describe("fact-check lookup page", () => {
   const pool = createPool(process.env.TEST_DATABASE_URL || process.env.DATABASE_URL);
   const SECRET_KEY = "AIza-test-key-that-must-never-appear";
@@ -85,7 +110,10 @@ describe("fact-check lookup page", () => {
   const app = createApp(pool, { sessionSecret: "test-secret", factCheckSearch: goodSearch });
   const brokenApp = createApp(pool, {
     sessionSecret: "test-secret",
-    factCheckSearch: createFactCheckSearch({ apiKey: SECRET_KEY, fetchImpl: fakeFetch(403, {}) }),
+    factCheckSearch: createFactCheckSearch({
+      apiKey: SECRET_KEY,
+      fetchImpl: fakeFetch(403, { error: { status: "PERMISSION_DENIED", details: [{ reason: "API_KEY_SERVICE_BLOCKED" }] } }),
+    }),
   });
   const emails = [`fc-a-${Date.now()}@example.com`, `fc-b-${Date.now()}@example.com`];
   const agentA = request.agent(app);
@@ -120,6 +148,18 @@ describe("fact-check lookup page", () => {
     expect(res.text).toContain('href="https://factcheck.example/yachts"');
   });
 
+  it("shows search tips, opened when nothing matches", async () => {
+    const found = await agentA.get(`/claims/${claimId}/fact-checks`);
+    expect(found.text).toContain("<summary>Search tips</summary>");
+    expect(found.text).not.toMatch(/<details class="search-tips" open>/);
+
+    const emptyApp = createApp(pool, { sessionSecret: "test-secret", factCheckSearch: async () => [] });
+    const agent = request.agent(emptyApp);
+    await agent.post("/login").type("form").send({ email: emails[0], password: "fc-pass-a" });
+    const none = await agent.get(`/claims/${claimId}/fact-checks`);
+    expect(none.text).toMatch(/<details class="search-tips" open>/);
+  });
+
   it("searches a custom phrase", async () => {
     await agentA.get(`/claims/${claimId}/fact-checks`).query({ q: "  Zelensky yachts  " });
     expect(queries.at(-1)).toBe("Zelensky yachts");
@@ -131,6 +171,8 @@ describe("fact-check lookup page", () => {
     const res = await agent.get(`/claims/${claimId}/fact-checks`);
     expect(res.status).toBe(200);
     expect(res.text).toContain("accept the request. Check that the API key is valid");
+    expect(res.text).toContain("reason: API_KEY_SERVICE_BLOCKED.");
+    expect(res.text).toContain("restrictions don");
     expect(res.text).not.toContain(SECRET_KEY);
   });
 

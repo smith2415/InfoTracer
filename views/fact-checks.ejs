@@ -15,6 +15,18 @@
     <button type="submit" class="button">Search</button>
   </form>
 
+  <details class="search-tips" <%= !error && results && results.length === 0 ? "open" : "" %>>
+    <summary>Search tips</summary>
+    <ul>
+      <li><strong>Search the distinctive part,</strong> not the whole sentence: names, places, numbers and unusual words.</li>
+      <li><strong>Try a name plus one key word,</strong> like "Zelensky yachts" instead of the full claim.</li>
+      <li><strong>Try other ways of writing numbers</strong> ("$12 billion," "12 billion," "12bn") and synonyms ("stolen," "embezzled").</li>
+      <li><strong>Read each match:</strong> claims get recycled, so check the wording and date before relying on a rating.</li>
+      <li><strong>No results doesn&rsquo;t mean true.</strong> The claim may be too new or worded differently.</li>
+    </ul>
+    <p class="search-tips-more"><a href="https://github.com/smith2415/InfoTracer/blob/main/docs/fact-check-guide.md" target="_blank" rel="noopener noreferrer">Read the full guide, with a worked example</a></p>
+  </details>
+
   <% if (error) { %>
     <p class="form-error" role="alert"><%= error %></p>
   <% } else if (results.length === 0) { %>

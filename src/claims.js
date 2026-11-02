@@ -3,7 +3,7 @@ import { requireLogin } from "./auth.js";
 import { fromDateTimeInput } from "./format.js";
 import { validateClaim, validateObservation, hasErrors } from "./validation.js";
 import { buildTimeline } from "./timeline.js";
-import { FactCheckError, FACT_CHECK_MESSAGES, ratingTone } from "./factcheck.js";
+import { FactCheckError, FACT_CHECK_MESSAGES, REASON_HINTS, ratingTone } from "./factcheck.js";
 import {
   CLAIM_STATUSES,
   CLAIM_SORTS,
@@ -193,6 +193,10 @@ export function claimsRouter(pool, { factCheckSearch } = {}) {
           if (!(err instanceof FactCheckError)) throw err;
           console.warn(err.message); // never includes the API key
           error = FACT_CHECK_MESSAGES[err.kind];
+          if (err.reason) {
+            error += ` Google's reason: ${err.reason}.`;
+            if (REASON_HINTS[err.reason]) error += ` ${REASON_HINTS[err.reason]}`;
+          }
         }
       }
 
