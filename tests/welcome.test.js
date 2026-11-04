@@ -46,7 +46,7 @@ describe("Welcome page", () => {
     expect(page.text).toContain("How your claims are stored");
     expect(page.text).toContain("Private to your account.");
     expect(page.text).toContain('href="/claims/new"');
-    expect(page.text).toContain('<a href="/welcome">Home</a>');
+    expect(page.text).toContain('<a href="/welcome">Welcome</a>');
   });
 
   it("offers a link to your claims once you have some", async () => {

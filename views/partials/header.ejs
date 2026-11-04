@@ -19,10 +19,10 @@
     </a>
     <% if (currentUser) { %>
       <nav class="site-nav" aria-label="Main">
-        <a href="/welcome">Home</a>
+        <a href="/welcome">Welcome</a>
+        <a href="/dashboard">Dashboard</a>
         <a href="/claims">Claims</a>
         <a href="/weeds">Weeds</a>
-        <a href="/dashboard">Dashboard</a>
         <span class="user-email"><%= currentUser.email %></span>
         <form method="post" action="/logout" class="inline-form">
           <button type="submit" class="link-button">Log out</button>
