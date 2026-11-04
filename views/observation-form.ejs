@@ -43,7 +43,7 @@
 
     <div class="form-actions">
       <button type="submit" class="button button-seed">Save observation</button>
-      <a class="button" href="/claims/<%= claim.id %>">Cancel</a>
+      <a class="button" href="/claims/<%= claim.id %><%= observation.id ? '#observation-' + observation.id : '#observations' %>">Cancel</a>
     </div>
   </form>
 </section>

@@ -1,5 +1,5 @@
 <%- include("partials/header") %>
-<p class="breadcrumb"><a href="/claims/<%= claim.id %>">← "<%= claim.claim_text %>"</a></p>
+<p class="breadcrumb"><a href="/claims/<%= claim.id %>#pinned-fact-checks">← "<%= claim.claim_text %>"</a></p>
 
 <section>
   <div class="page-head">
@@ -8,6 +8,19 @@
       <p class="muted">Published fact-checks from Google Fact Check Explorer, which collects reviews from fact-checking organizations.</p>
     </div>
   </div>
+
+  <% if (pinNote) { %>
+    <p class="pin-note" role="status">
+      <%= pinNote === "pinned" ? "Pinned to this claim." : "Unpinned from this claim." %>
+      Pinned fact-checks appear in the Fact-check box on the claim's page.
+      <a href="/claims/<%= claim.id %>#pinned-fact-checks">See your pinned fact-checks →</a>
+    </p>
+  <% } else if (pinned.size > 0) { %>
+    <p class="pin-note pin-note-quiet">
+      <%= pinned.size %> fact-check<%= pinned.size === 1 ? " is" : "s are" %> pinned to this claim.
+      <a href="/claims/<%= claim.id %>#pinned-fact-checks">See them on the claim's page →</a>
+    </p>
+  <% } %>
 
   <form method="get" action="/claims/<%= claim.id %>/fact-checks" class="factcheck-form factcheck-form-page" role="search">
     <label for="fc-q" class="visually-hidden">Search fact-checks for</label>
@@ -65,6 +78,7 @@
                   <% if (pinId) { %>
                     <form method="post" action="/fact-check-pins/<%= pinId %>/unpin" class="inline-form review-pin">
                       <input type="hidden" name="return_to" value="results">
+                      <input type="hidden" name="unpinning" value="1">
                       <input type="hidden" name="q" value="<%= query %>">
                       <button type="submit" class="button button-small is-pinned" aria-label="Unpin this fact-check from the claim">Pinned ✓</button>
                     </form>

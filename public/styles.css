@@ -451,6 +451,13 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .source-line strong { font-weight: 500; }
 .source-error { color: #f09595; }
 .source-warning { display: block; margin-top: 2px; color: var(--status); font-size: 13px; }
+.search-help { margin-top: 10px; padding: 10px 14px; border-left: 3px solid var(--status); background: #2a2310; border-radius: 4px; font-size: 13px; }
+.search-help-title { margin: 0 0 6px; font-weight: 500; color: var(--text); }
+.search-help ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; color: #c9c7bf; }
+.pin-note { margin: 0 0 14px; padding: 10px 14px; border: 1px solid var(--seed); background: #1d2a12; color: #c0dd97; border-radius: var(--radius); font-size: 14px; }
+.pin-note a { color: #c0dd97; font-weight: 500; }
+.pin-note-quiet { border-color: var(--border); background: transparent; color: var(--muted); }
+.pin-note-quiet a { color: var(--seed-light); }
 
 .pinned-list { margin-top: 14px; }
 .pinned-heading { margin: 0 0 4px; font-size: 14px; font-weight: 500; }

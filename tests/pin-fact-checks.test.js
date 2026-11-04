@@ -68,7 +68,8 @@ describe("pinning fact-checks", () => {
 
   it("pins a fact-check, returns to the results, and shows it as pinned", async () => {
     const res = await agentA.post(`/claims/${claimId}/fact-checks/pin`).type("form").send(pinForm);
-    expect(res.headers.location).toBe(`/claims/${claimId}/fact-checks?q=two%20mega%20yachts`);
+    // Returns to the same results, with a one-time note saying where the pin went.
+    expect(res.headers.location).toBe(`/claims/${claimId}/fact-checks?q=two%20mega%20yachts&pinned=1`);
 
     const rows = await pins();
     expect(rows).toHaveLength(1);
