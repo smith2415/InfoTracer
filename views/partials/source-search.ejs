@@ -34,6 +34,17 @@
           </p>
         <% } %>
       <% }) %>
+      <% if (sourceSearch.sources.some((s) => !s.error && s.found === 0)) { %>
+        <div class="search-help">
+          <p class="search-help-title">Not finding it? Try a different phrase:</p>
+          <ul>
+            <li><strong>Use two to four distinctive words,</strong> not the whole sentence: names, places, numbers and unusual words.</li>
+            <li><strong>Drop filler</strong> like "will", "the" and "cause". "Billionaire tax" finds more than "billionaire tax will cause billionaires to flee".</li>
+            <li><strong>Try the exact wording people repeat,</strong> and other ways of writing it ("$12 billion", "12 billion", "12bn").</li>
+            <li><strong>Very new or very old claims</strong> may not be in every source yet, so a blank source isn't proof the claim isn't out there.</li>
+          </ul>
+        </div>
+      <% } %>
     </div>
   <% } %>
 </section>

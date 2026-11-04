@@ -333,7 +333,9 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
       const pinned = new Map(
         (await listPinnedFactChecks(pool, req.session.userId, id)).map((p) => [urlKey(p.url), p.id])
       );
-      res.render("fact-checks", { title: "Fact-checks", claim, query, results, error, ratingTone, pinned, urlKey });
+      // A one-time note after pinning or unpinning, saying where pins go.
+      const pinNote = req.query.pinned ? "pinned" : req.query.unpinned ? "unpinned" : null;
+      res.render("fact-checks", { title: "Fact-checks", claim, query, results, error, ratingTone, pinned, urlKey, pinNote });
     } catch (err) {
       next(err);
     }
@@ -343,7 +345,8 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
   function afterPin(body, claimId) {
     if (body.return_to === "results") {
       const q = typeof body.q === "string" ? body.q.slice(0, 200) : "";
-      return `/claims/${claimId}/fact-checks?q=${encodeURIComponent(q)}`;
+      const note = body.unpinning ? "unpinned" : "pinned";
+      return `/claims/${claimId}/fact-checks?q=${encodeURIComponent(q)}&${note}=1`;
     }
     return `/claims/${claimId}#pinned-fact-checks`;
   }
@@ -552,7 +555,7 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
         quote: `${observation.location}${observation.poster ? " · " + observation.poster : ""}`,
         warning: "This can't be undone.",
         action: `/observations/${id}/delete`,
-        cancel: `/claims/${observation.claim_id}`,
+        cancel: `/claims/${observation.claim_id}#observation-${id}`,
       });
     } catch (err) {
       next(err);
@@ -564,7 +567,7 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
       const id = idParam(req.params.id);
       const claimId = id && (await deleteObservation(pool, req.session.userId, id));
       if (!claimId) return notFound(res);
-      res.redirect(`/claims/${claimId}`);
+      res.redirect(`/claims/${claimId}#observations`);
     } catch (err) {
       next(err);
     }
