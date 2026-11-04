@@ -271,8 +271,8 @@ Added after the build, on November 4. The plan above is unchanged; this
 section records what actually shipped. PR links show where each change
 happened.
 
-Building InfoTracer took 29 merged pull requests, counting this one, against
-the 9 the assignment asks for. Hosting on Replit took the most (5), followed
+Building InfoTracer took 29 merged pull requests, counting this one. Hosting
+on Replit took the most (5), followed
 by source search (4), the fact-check lookup (3) and the features I added
 after using the app (3). Testing and performance each took 2. The seven
 spine features and the origin timeline took one PR each, and the plan itself
