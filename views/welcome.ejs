@@ -1,0 +1,62 @@
+<%- include("partials/header") %>
+<section class="welcome">
+  <div class="welcome-hero">
+    <p class="welcome-eyebrow">Welcome to InfoTracer</p>
+    <h1>Welcome, <span class="welcome-name"><%= name %></span></h1>
+    <p class="welcome-lede">InfoTracer helps you trace a claim back to where it started: when it first appeared, where, and who carried it from there.</p>
+    <div class="welcome-actions">
+      <a class="button button-seed" href="/claims/new">Start a new claim</a>
+      <% if (claimCount > 0) { %>
+        <a class="button" href="/claims">Go to your claims (<%= claimCount %>)</a>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="tool-card welcome-why">
+    <h2>Why trace a claim?</h2>
+    <p>The first version of a story people see is often the one they believe. Claims spread by repeating the same distinctive wording, so that wording can be followed back toward its first appearance. Finding the earliest sighting, and the accounts that pushed it on purpose, is how you pull a false claim out by the roots.</p>
+  </div>
+
+  <h2 class="welcome-heading">How to use it</h2>
+  <ol class="welcome-steps">
+    <li>
+      <h3>Log a claim and its hook</h3>
+      <p>Write the claim as you saw it, then its <strong>hook</strong>: the short, distinctive phrase that travels with it, like "$12 billion". The hook is what InfoTracer searches for.</p>
+    </li>
+    <li class="welcome-step-main">
+      <h3>Run Source search <span class="flag flag-seed">main tool</span></h3>
+      <p>On the claim's page, <strong>Search sources</strong> checks Bluesky, worldwide news (GDELT) and X, Reddit, TikTok and Instagram (through Xpoz) at once, and saves the earliest matches as observations. A search can take up to a minute; the progress shows each source as it finishes.</p>
+      <p class="welcome-tip"><strong>If nothing comes up,</strong> shorten the hook to its most distinctive two to four words, drop filler like "will" and "the", and try the exact wording people repeat. "Billionaire tax" finds more than "billionaire tax will cause billionaires to flee".</p>
+    </li>
+    <li>
+      <h3>Review and mark the observations</h3>
+      <p>Each observation is one sighting: when, where and who. Edit anything a search got wrong, add ones you find yourself, and mark them:</p>
+      <ul class="welcome-marks">
+        <li><span class="flag flag-seed">seed</span> where you believe the claim began (one per claim)</li>
+        <li><span class="flag flag-weed">weed</span> an account deliberately spreading it</li>
+        <li><span class="flag flag-important">important</span> worth highlighting for any other reason</li>
+      </ul>
+    </li>
+    <li>
+      <h3>Read the origin timeline</h3>
+      <p>Every dated observation goes on a timeline, oldest first, so you can see how the claim spread and who amplified it.</p>
+    </li>
+    <li>
+      <h3>Check the fact-checks</h3>
+      <p><strong>Search fact-checks</strong> shows whether fact-checkers have already covered the claim. Pin the useful ones; they appear in the claim's fact-check box.</p>
+    </li>
+  </ol>
+
+  <div class="tool-card welcome-storage">
+    <h2>How your claims are stored</h2>
+    <ul>
+      <li><strong>Private to your account.</strong> Your claims, observations, marks and pinned fact-checks are saved in InfoTracer's database under your account, and no one else can see them.</li>
+      <li><strong>Searches save copies, not live links.</strong> Source search saves what it found as observations, labeled with where each came from. Results from Xpoz are flagged "verify", since Xpoz doesn't disclose how it collects its data.</li>
+      <li><strong>Everything can be changed.</strong> You can edit or delete any observation, and deleting a claim deletes its observations and marks with it.</li>
+      <li><strong>The earliest found isn't proof.</strong> Posts get deleted and claims jump platforms, so the seed is your best evidence, not a verdict.</li>
+    </ul>
+  </div>
+
+  <p class="muted welcome-footer">You can come back to this page any time from <strong>Home</strong> in the menu.</p>
+</section>
+<%- include("partials/footer") %>

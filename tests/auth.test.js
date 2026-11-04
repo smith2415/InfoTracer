@@ -29,7 +29,7 @@ describe("sign up and login", () => {
   it("creates a user row with a hashed password on sign up", async () => {
     const agent = request.agent(app);
     const res = await agent.post("/signup").type("form").send({ email, password });
-    expect(res.headers.location).toBe("/claims");
+    expect(res.headers.location).toBe("/welcome");
 
     const { rows } = await pool.query("SELECT password_hash FROM users WHERE email = $1", [email]);
     expect(rows).toHaveLength(1);
@@ -54,7 +54,7 @@ describe("sign up and login", () => {
   it("logs in and logs out", async () => {
     const agent = request.agent(app);
     const login = await agent.post("/login").type("form").send({ email, password });
-    expect(login.headers.location).toBe("/claims");
+    expect(login.headers.location).toBe("/welcome");
     expect((await agent.get("/claims")).status).toBe(200);
 
     await agent.post("/logout");

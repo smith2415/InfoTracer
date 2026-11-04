@@ -18,7 +18,7 @@ function startSession(req, res, user, next) {
     req.session.email = user.email;
     req.session.save((saveErr) => {
       if (saveErr) return next(saveErr);
-      res.redirect("/claims");
+      res.redirect("/welcome");
     });
   });
 }
@@ -27,7 +27,7 @@ export function authRouter(pool) {
   const router = express.Router();
 
   router.get("/signup", (req, res) => {
-    if (req.session.userId) return res.redirect("/claims");
+    if (req.session.userId) return res.redirect("/welcome");
     res.render("signup", { title: "Create account", error: null, email: "" });
   });
 
@@ -61,7 +61,7 @@ export function authRouter(pool) {
   });
 
   router.get("/login", (req, res) => {
-    if (req.session.userId) return res.redirect("/claims");
+    if (req.session.userId) return res.redirect("/welcome");
     res.render("login", { title: "Log in", error: null, email: "" });
   });
 
