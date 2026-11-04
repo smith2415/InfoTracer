@@ -264,3 +264,39 @@ others, plus a note saying which source didn't respond.
 
 **Future sources (not in this version):** Wayback Machine (to verify when a
 page first existed) and Media Cloud (news archive).
+
+## Plan vs. Reality
+
+Added after the build, on November 4. The plan above is unchanged; this
+section records what actually shipped. PR links show where each change
+happened.
+
+Building InfoTracer took 29 merged pull requests, counting this one. Hosting
+on Replit took the most (5), followed
+by source search (4), the fact-check lookup (3) and the features I added
+after using the app (3). Testing and performance each took 2. The seven
+spine features and the origin timeline took one PR each, and the plan itself
+took one.
+
+| Planned feature | Shipped / Changed / Cut | Status (Done/Backlogged) | Learning | What changed and why (one line) |
+| --- | --- | --- | --- | --- |
+| 1. Sign up and login | Shipped, later changed | Done | Security settings interact: loosening one quietly removed another. | Built as planned ([#5](https://github.com/smith2415/InfoTracer/pull/5)); to embed the app on Planting Weeds the login cookie had to change, which removed a hidden protection against forged forms, so I added an explicit check ([#55](https://github.com/smith2415/InfoTracer/pull/55)). |
+| 2. Data model | Changed | Done | Real use finds tables the plan didn't. | Four tables as planned ([#14](https://github.com/smith2415/InfoTracer/pull/14)), then a fifth, `pinned_fact_checks` ([#39](https://github.com/smith2415/InfoTracer/pull/39)), and an `is_important` column ([#57](https://github.com/smith2415/InfoTracer/pull/57)), because I needed to keep fact-checks and highlight posts that weren't seeds or weeds. |
+| 3. Create / read / update / delete | Shipped | Done | Writing the full user story up front made this the smoothest feature. | Built as planned, including marking one seed per claim ([#15](https://github.com/smith2415/InfoTracer/pull/15)). |
+| 4. Validation | Changed (expanded) | Done | Validation is about keeping records usable, not just filling required fields. | Beyond the two required fields, it also checks that links start with https://, that dates are real dates, and the 2,000-character limits ([#16](https://github.com/smith2415/InfoTracer/pull/16)). |
+| 5. Weeds (stars) | Changed | Done | One kind of star wasn't enough to describe evidence; what a mark means matters as much as how it's organized. | The plan treated weed as the only star, with seed as a field under CRUD. In practice there are three marks that work like stars: seed (where it began, one per claim, [#15](https://github.com/smith2415/InfoTracer/pull/15)), weed (the required junction table, [#19](https://github.com/smith2415/InfoTracer/pull/19)) and important (worth highlighting without being either, [#57](https://github.com/smith2415/InfoTracer/pull/57)); weeds are also grouped by claim ([#51](https://github.com/smith2415/InfoTracer/pull/51)). |
+| 6. Find things | Changed (expanded) | Done | Sorting by most observations turned out to be a quick way to find the busiest claims. | Search, status and location filters as planned, plus two extra sorts: oldest first and most observations ([#26](https://github.com/smith2415/InfoTracer/pull/26)). |
+| 7. Dashboard | Shipped | Done | Having a central location for topline information is important to having a centered, natural feeling UI. | Claims traced, top seed location, weed share and a weeds-by-location chart, as planned ([#29](https://github.com/smith2415/InfoTracer/pull/29)). |
+| 8. Origin timeline | Shipped, later changed | Done | Charts that look fine on a laptop can be unreadable on a phone. | Built as planned with the "earliest found" label from my risks section, and scrollable on phones after it was unreadable there ([#32](https://github.com/smith2415/InfoTracer/pull/32)); later it also shows "important" posts ([#57](https://github.com/smith2415/InfoTracer/pull/57)). |
+| 9. Fact-check lookup | Changed (expanded) | Done | An outside service's vague error costs more time than the feature itself, and a lookup is only useful if you can keep what you find. | Built as planned ([#33](https://github.com/smith2415/InfoTracer/pull/33)); my Google key was restricted to "Websites" and every search failed with a vague message, so the app now shows Google's reason and has a how-to guide ([#37](https://github.com/smith2415/InfoTracer/pull/37)). Results also got Pin / Pinned ✓ buttons and a pinned list on the claim page, which needed a new table ([#39](https://github.com/smith2415/InfoTracer/pull/39)). |
+| 10. Source search | Changed (most) | Done | I planned for sources failing, not for them being slow; each source took a different amount of time, and silence felt broken. | Split into three PRs ([#35](https://github.com/smith2415/InfoTracer/pull/35), [#41](https://github.com/smith2415/InfoTracer/pull/41), [#43](https://github.com/smith2415/InfoTracer/pull/43)); GDELT needed a two-step search to get past its 3-month limit, Bluesky is capped at 500 posts, and each source saves its 10 earliest. On the live site a search took 30-60 seconds with nothing on screen, so it now has a 60-second limit and a progress area that shows each source as done, failed or still working, with its time ([#49](https://github.com/smith2415/InfoTracer/pull/49)). |
+| Tests (data isolation, dashboard stat) | Changed | Done | Where tests run matters as much as writing them. | Both written as planned ([#29](https://github.com/smith2415/InfoTracer/pull/29), [#31](https://github.com/smith2415/InfoTracer/pull/31)), but Replit blocks the test runner, so they run on GitHub Actions instead ([#23](https://github.com/smith2415/InfoTracer/pull/23), [#28](https://github.com/smith2415/InfoTracer/pull/28)). |
+| Hosting on Replit ("least setup") | Changed | Done | "Least setup" was the most setup of anything in the project, and changes made outside my PRs were the hardest to track. | Replit stayed, but Replit's own agent changed the configuration outside my PRs, a stuck rebase had to be cleared, its security filter blocked the test runner, and a new package broke the preview until it was installed. It took five PRs and a log to sort out ([#18](https://github.com/smith2415/InfoTracer/pull/18), [#21](https://github.com/smith2415/InfoTracer/pull/21), [#23](https://github.com/smith2415/InfoTracer/pull/23), [#25](https://github.com/smith2415/InfoTracer/pull/25), [#47](https://github.com/smith2415/InfoTracer/pull/47)). |
+| Cut order (Xpoz first, then GDELT, then fact-check) | Cut nothing | Done | A cut list is insurance; I didn't need it, but it let me take the risk. | All three sources and the fact-check lookup shipped, so nothing on the cut list was cut. |
+| Future sources: Wayback Machine, Media Cloud | Not built | Backlogged | Keeping them out kept the scope finishable. | Left for a later version, as the plan said. |
+
+**Not in the plan at all:** pinning fact-checks ([#39](https://github.com/smith2415/InfoTracer/pull/39)), an
+"important" mark ([#57](https://github.com/smith2415/InfoTracer/pull/57)), weeds grouped by claim ([#51](https://github.com/smith2415/InfoTracer/pull/51)), two
+performance passes ([#45](https://github.com/smith2415/InfoTracer/pull/45), [#53](https://github.com/smith2415/InfoTracer/pull/53)), and embedding the app as a
+page on the Planting Weeds site ([#55](https://github.com/smith2415/InfoTracer/pull/55)). Each came from using the app,
+not from the plan.
