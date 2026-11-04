@@ -1,0 +1,88 @@
+<%
+  const clip = (text, max) => { const t = String(text || ""); return t.length > max ? t.slice(0, max - 1) + "…" : t; };
+  const totals = overview.reduce((t, c) => ({
+    seeds: t.seeds + (c.seed ? 1 : 0), weeds: t.weeds + c.weeds.length,
+    important: t.important + c.important.length, pins: t.pins + c.pins.length,
+  }), { seeds: 0, weeds: 0, important: 0, pins: 0 });
+  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+%>
+<section class="overview" aria-labelledby="overview-heading">
+  <div class="overview-head">
+    <h2 id="overview-heading">Your claims at a glance</h2>
+    <% if (overview.length > 0) { %>
+      <p class="muted">
+        <%= plural(overview.length, "claim") %> ·
+        <span class="seed-text"><%= plural(totals.seeds, "seed") %></span> ·
+        <span class="weed-text"><%= plural(totals.weeds, "weed") %></span> ·
+        <span class="important-text"><%= totals.important %> important</span> ·
+        <%= plural(totals.pins, "pinned fact-check") %>
+      </p>
+    <% } %>
+  </div>
+
+  <% if (overview.length === 0) { %>
+    <div class="empty-state">
+      <p class="empty-title">No claims yet</p>
+      <p class="muted">Each claim you log will appear here with its seed, weeds, important observations and pinned fact-checks.</p>
+      <a class="button button-seed" href="/claims/new">Start a new claim</a>
+    </div>
+  <% } else { %>
+    <ol class="overview-list">
+      <% overview.forEach((c) => { const marked = c.marked.length > 0; %>
+        <li class="overview-card">
+          <div class="overview-card-head">
+            <a class="overview-claim" href="/claims/<%= c.id %>">"<%= c.claim_text %>"</a>
+            <div class="case-meta">
+              <span class="badge badge-<%= c.status.replace(' ', '-') %>"><%= c.status %></span>
+              <% if (c.hook) { %><span class="tag">hook: <%= c.hook %></span><% } %>
+              <span class="muted-inline"><%= plural(c.observation_count, "observation") %></span>
+            </div>
+          </div>
+
+          <% if (!marked && c.pins.length === 0) { %>
+            <p class="overview-empty">Nothing marked or pinned yet. <a href="/claims/<%= c.id %>">Open the claim</a> to mark a seed, weeds or important observations.</p>
+          <% } else { %>
+            <div class="overview-body">
+              <% if (marked) { %>
+                <div class="overview-col">
+                  <h3 class="overview-label">Marked observations <span class="count"><%= c.marked.length %></span></h3>
+                  <ul class="overview-items">
+                    <% c.marked.forEach((o) => { %>
+                      <li>
+                        <a href="/claims/<%= c.id %>#observation-<%= o.id %>" class="overview-obs">
+                          <span class="overview-obs-flags">
+                            <% if (o.is_seed) { %><span class="flag flag-seed">seed</span><% } %>
+                            <% if (o.is_weed) { %><span class="flag flag-weed">weed</span><% } %>
+                            <% if (o.is_important) { %><span class="flag flag-important">important</span><% } %>
+                          </span>
+                          <span class="overview-obs-meta"><%= formatDate(o.observed_at) %> · <%= o.location %><% if (o.poster) { %> · <strong><%= o.poster %></strong><% } %></span>
+                          <% if (o.post_text) { %><span class="overview-obs-text">"<%= clip(o.post_text, 140) %>"</span><% } %>
+                        </a>
+                      </li>
+                    <% }) %>
+                  </ul>
+                </div>
+              <% } %>
+              <% if (c.pins.length > 0) { %>
+                <div class="overview-col">
+                  <h3 class="overview-label">Pinned fact-checks <span class="count"><%= c.pins.length %></span></h3>
+                  <ul class="overview-items">
+                    <% c.pins.forEach((p) => { const link = safeUrl(p.url); %>
+                      <li class="overview-pin">
+                        <% if (p.rating) { %><span class="rating rating-<%= ratingTone(p.rating) %>"><%= p.rating %></span><% } %>
+                        <span>
+                          <strong><%= p.publisher || "Unknown publisher" %></strong><% if (p.review_date) { %><span class="muted-inline"> · <%= formatDate(p.review_date) %></span><% } %><br>
+                          <% if (link) { %><a href="<%= link %>" target="_blank" rel="noopener noreferrer"><%= p.title || "Read the fact-check" %></a><% } else { %><%= p.title || "" %><% } %>
+                        </span>
+                      </li>
+                    <% }) %>
+                  </ul>
+                </div>
+              <% } %>
+            </div>
+          <% } %>
+        </li>
+      <% }) %>
+    </ol>
+  <% } %>
+</section>

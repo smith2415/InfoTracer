@@ -448,6 +448,59 @@ export async function getDashboardStats(pool, userId) {
   };
 }
 
+// Every claim with its most important information, for the dashboard:
+// the observations marked seed, weed or important, and the pinned
+// fact-checks. Newest claim first; each claim's observations oldest first.
+// Three queries in total, however many claims there are.
+export async function getClaimOverview(pool, userId) {
+  const [claims, marked, pins] = await Promise.all([
+    pool.query(
+      `SELECT c.id, c.claim_text, c.hook, c.status, c.created_at,
+              COUNT(o.id)::int AS observation_count
+         FROM claims c
+         LEFT JOIN observations o ON o.claim_id = c.id
+        WHERE c.user_id = $1
+        GROUP BY c.id
+        ORDER BY c.created_at DESC, c.id DESC`,
+      [userId]
+    ),
+    pool.query(
+      `SELECT o.id, o.claim_id, o.observed_at, o.location, o.poster, o.post_text,
+              o.url, o.found_by, o.is_seed, o.is_important,
+              (w.user_id IS NOT NULL) AS is_weed
+         FROM observations o
+         JOIN claims c ON c.id = o.claim_id
+         LEFT JOIN weeds w ON w.observation_id = o.id AND w.user_id = $1
+        WHERE c.user_id = $1 AND (o.is_seed OR o.is_important OR w.user_id IS NOT NULL)
+        ORDER BY o.observed_at ASC NULLS LAST, o.id ASC`,
+      [userId]
+    ),
+    pool.query(
+      `SELECT p.id, p.claim_id, p.url, p.publisher, p.title, p.rating, p.review_date
+         FROM pinned_fact_checks p
+         JOIN claims c ON c.id = p.claim_id
+        WHERE c.user_id = $1
+        ORDER BY p.review_date DESC NULLS LAST, p.created_at DESC`,
+      [userId]
+    ),
+  ]);
+
+  const byId = new Map(
+    claims.rows.map((c) => [c.id, { ...c, marked: [], seed: null, weeds: [], important: [], pins: [] }])
+  );
+  // "marked" lists each observation once, oldest first; seed, weeds and
+  // important give the same observations by mark, for counting.
+  for (const o of marked.rows) {
+    const claim = byId.get(o.claim_id);
+    claim.marked.push(o);
+    if (o.is_seed) claim.seed = o;
+    if (o.is_weed) claim.weeds.push(o);
+    if (o.is_important) claim.important.push(o);
+  }
+  for (const p of pins.rows) byId.get(p.claim_id).pins.push(p);
+  return [...byId.values()];
+}
+
 // ---------- Pinned fact-checks ----------
 // Fact-check articles from the lookup that a user keeps on a claim's page.
 

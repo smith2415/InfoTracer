@@ -337,6 +337,30 @@ textarea:focus, select:focus { outline: none; border-color: var(--seed-light); }
 .stat-note { margin: 4px 0 0; font-size: 13px; color: var(--muted); }
 .seed-text { color: var(--seed-light); }
 .weed-text { color: #f09595; }
+.important-text { color: #85b7eb; }
+
+/* Dashboard: every claim at a glance */
+.overview { margin-top: 28px; }
+.overview-head h2 { margin: 0 0 4px; font-size: 18px; font-weight: 500; }
+.overview-head .muted { margin: 0 0 14px; font-size: 14px; }
+.overview-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.overview-card { padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); }
+.overview-card-head { margin-bottom: 12px; }
+.overview-claim { display: block; margin-bottom: 8px; color: var(--text); text-decoration: none; font-size: 16px; font-weight: 500; overflow-wrap: anywhere; }
+.overview-claim:hover { color: var(--seed-light); }
+.overview-empty { margin: 0; font-size: 13px; color: var(--muted); }
+.overview-body { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 24px; padding-top: 12px; border-top: 1px solid var(--border); }
+.overview-label { margin: 0 0 6px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.overview-col .overview-label:not(:first-child) { margin-top: 12px; }
+.overview-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.overview-obs { display: block; padding: 6px 10px; border-radius: 6px; text-decoration: none; color: var(--text); background: #1a1c20; }
+.overview-obs:hover { background: #22252a; }
+.overview-obs-flags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+.overview-obs-meta { display: block; font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+.overview-obs-meta strong { color: var(--text); font-weight: 500; }
+.overview-obs-text { display: block; margin-top: 2px; font-family: var(--mono); font-size: 12px; color: #b4b2a9; overflow-wrap: anywhere; }
+.overview-pin { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; overflow-wrap: anywhere; }
+.overview-pin a { color: var(--seed-light); }
 .chart-card {
   padding: 18px;
   border: 1px solid var(--border);

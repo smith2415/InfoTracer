@@ -29,6 +29,7 @@ import {
   listWeeds,
   groupWeedsByClaim,
   getDashboardStats,
+  getClaimOverview,
   listPinnedFactChecks,
   pinFactCheck,
   unpinFactCheck,
@@ -602,8 +603,11 @@ export function claimsRouter(pool, { factCheckSearch, sources = [] } = {}) {
 
   router.get("/dashboard", requireLogin, async (req, res, next) => {
     try {
-      const stats = await getDashboardStats(pool, req.session.userId);
-      res.render("dashboard", { title: "Dashboard", stats });
+      const [stats, overview] = await Promise.all([
+        getDashboardStats(pool, req.session.userId),
+        getClaimOverview(pool, req.session.userId),
+      ]);
+      res.render("dashboard", { title: "Dashboard", stats, overview, ratingTone });
     } catch (err) {
       next(err);
     }
