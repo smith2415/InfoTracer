@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { authRouter } from "./auth.js";
 import { claimsRouter } from "./claims.js";
+import { welcomeRouter } from "./welcome.js";
 import { createFactCheckSearch } from "./factcheck.js";
 import { createDefaultSources } from "./sources/index.js";
 import * as format from "./format.js";
@@ -90,10 +91,11 @@ export function createApp(pool, { sessionSecret = process.env.SESSION_SECRET, fa
   app.use(sameSiteFormsOnly);
 
   app.get("/", (req, res) => {
-    res.redirect(req.session.userId ? "/claims" : "/login");
+    res.redirect(req.session.userId ? "/welcome" : "/login");
   });
 
   app.use(authRouter(pool));
+  app.use(welcomeRouter(pool));
 
   app.use(
     claimsRouter(pool, {
